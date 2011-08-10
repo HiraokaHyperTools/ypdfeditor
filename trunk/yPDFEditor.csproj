@@ -107,9 +107,9 @@
       <SubType>Designer</SubType>
       <DependentUpon>ThumbView.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="WIP.resx">
+    <EmbeddedResource Include="WIP2.resx">
       <SubType>Designer</SubType>
-      <DependentUpon>WIP.cs</DependentUpon>
+      <DependentUpon>WIP2.cs</DependentUpon>
     </EmbeddedResource>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -131,11 +131,11 @@
     <Compile Include="ThumbView.Designer.cs">
       <DependentUpon>ThumbView.cs</DependentUpon>
     </Compile>
-    <Compile Include="WIP.cs">
+    <Compile Include="WIP2.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="WIP.Designer.cs">
-      <DependentUpon>WIP.cs</DependentUpon>
+    <Compile Include="WIP2.Designer.cs">
+      <DependentUpon>WIP2.cs</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>

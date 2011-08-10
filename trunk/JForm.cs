@@ -416,6 +416,8 @@ namespace yPDFEditor {
                     DialogResult res;
                     if (Currentfp == null)
                         res = DialogResult.OK;
+                    else if (iMark.Item >= 0)
+                        res = DialogResult.Yes;
                     else
                         using (OpenWayForm form = new OpenWayForm(true))
                             res = form.ShowDialog();
@@ -433,9 +435,10 @@ namespace yPDFEditor {
                             iAt = tv.Picts.Count;
                         }
 
-                        foreach (String fp in alfp) {
-                            EditAppendPDF(fp, iAt);
-                        }
+                        using (WIPPanel wipp = new WIPPanel(tv))
+                            foreach (String fp in alfp) {
+                                EditAppendPDF(fp, iAt);
+                            }
                     }
                     return;
                 }
@@ -451,14 +454,16 @@ namespace yPDFEditor {
                         for (int x = iSelFirst; x <= iSelLast; x++) al.Add(tv.Picts[x]);
 
                         if (isCopy) {
-                            EditCopyPages(iAt, iSelFirst, iSelLast);
+                            using (WIPPanel wipp = new WIPPanel(tv))
+                                EditCopyPages(iAt, iSelFirst, iSelLast);
                         }
                         else {
                             if (iSelFirst <= iAt && iAt <= iSelLast + 1) {
 
                             }
                             else {
-                                EditMovePages(iAt, iSelFirst, iSelLast);
+                                using (WIPPanel wipp = new WIPPanel(tv))
+                                    EditMovePages(iAt, iSelFirst, iSelLast);
                             }
                         }
                     }
@@ -497,9 +502,10 @@ namespace yPDFEditor {
 
                             pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
 
-                            for (int x = 0; x < cnt; x++) {
-                                tv.Picts.Insert(iAt + x, new TvPict(pdfexp, x));
-                            }
+                            using (WIPPanel wipp = new WIPPanel(tv))
+                                for (int x = 0; x < cnt; x++) {
+                                    tv.Picts.Insert(iAt + x, new TvPict(pdfexp, x));
+                                }
                             for (int i = 0; i < tv.Picts.Count; i++) {
                                 tv.Picts[i].Relocate(pdfexp, i);
                             }
