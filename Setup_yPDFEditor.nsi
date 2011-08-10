@@ -8,8 +8,8 @@
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
 
-!define VER    "0.1"
-!define APPVER "0_1"
+!define VER    "0.2"
+!define APPVER "0_2"
 
 !define MIME "application/pdf"
 
