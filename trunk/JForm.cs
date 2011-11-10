@@ -294,6 +294,7 @@ namespace yPDFEditor {
                     psi.CreateNoWindow = true;
                     psi.UseShellExecute = false;
                     psi.RedirectStandardOutput = true;
+                    psi.RedirectStandardError = true;
                     Process p = Process.Start(psi);
                     Stream si = p.StandardOutput.BaseStream;
                     byte[] bin = new byte[4000];
@@ -302,6 +303,7 @@ namespace yPDFEditor {
                         if (r < 1) break;
                         os.Write(bin, 0, r);
                     }
+                    String errMsg = p.StandardError.ReadToEnd();
                     p.WaitForExit();
 
                     if (p.ExitCode == 0) {

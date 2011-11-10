@@ -8,8 +8,8 @@
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
 
-!define VER    "0.2"
-!define APPVER "0_2"
+!define VER    "0.3"
+!define APPVER "0_3"
 
 !define MIME "application/pdf"
 
@@ -99,16 +99,8 @@ Section "${APP}" ;No components page, name is not important
   !insertmacro CheckDotNET ${DOTNET_VERSION}
 
   ; Put file there
-  File "GNU\freetype6.dll"
-  File "GNU\libgcc_s_dw2-1.dll"
-  File "GNU\libiconv2.dll"
-  File "GNU\libjpeg-8.dll"
-  File "GNU\libpng14-14.dll"
-  File "GNU\libpoppler-13.dll"
-  File "GNU\libstdc++-6.dll"
   File "GNU\pdfinfo.exe"
   File "GNU\pdftoppm.exe"
-  File "GNU\zlib1.dll"
 
   File "GNU2\cyggcc_s-1.dll"
   File "GNU2\cygiconv-2.dll"
@@ -120,6 +112,11 @@ Section "${APP}" ;No components page, name is not important
   File "bin\release\${APP}.pdb"
   File ".\MAPISendMailSa.exe"
   File "1.ico"
+
+  SetOutPath "$INSTDIR\share\poppler"
+  File /r /x ".svn" "poppler-data\*.*"
+
+  SetOutPath $INSTDIR
 
   WriteRegStr HKCU "Software\Classes\${APP}" "" "${TITLE}"
   WriteRegstr HKCU "Software\Classes\${APP}\DefaultIcon" "" "$INSTDIR\1.ico,0"
@@ -174,8 +171,8 @@ Section "Uninstall"
 
   ReadRegStr $0 HKCU "Software\Classes\${EXT}" ""
   ${If} $0 == "${APP}"
-  ReadRegStr $0 HKLM "Software\Classes\${EXT}" ""
-  WriteRegStr   HKCU "Software\Classes\${EXT}" "" "$0"
+    ReadRegStr $0 HKLM "Software\Classes\${EXT}" ""
+    WriteRegStr   HKCU "Software\Classes\${EXT}" "" "$0"
   ${EndIf}
 
   ; Remove files and uninstaller
@@ -200,6 +197,9 @@ Section "Uninstall"
   Delete "$INSTDIR\${APP}.exe"
   Delete "$INSTDIR\${APP}.pdb"
   Delete "$INSTDIR\MAPISendMailSa.exe"
+
+  RMDir /r "$INSTDIR\share\poppler"
+  RMDir    "$INSTDIR\share"
 
   DetailPrint "関連付け更新中です。お待ちください。"
   !insertmacro UPDATEFILEASSOC
