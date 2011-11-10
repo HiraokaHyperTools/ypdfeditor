@@ -115,6 +115,7 @@
             // 
             this.vsc.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.vsc.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.vsc.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.vsc.Location = new System.Drawing.Point(0, 0);
             this.vsc.Name = "vsc";
             // 
@@ -192,7 +193,7 @@
             this.bAbout});
             this.tstop.Location = new System.Drawing.Point(3, 0);
             this.tstop.Name = "tstop";
-            this.tstop.Size = new System.Drawing.Size(659, 35);
+            this.tstop.Size = new System.Drawing.Size(657, 35);
             this.tstop.TabIndex = 0;
             // 
             // bNew
@@ -331,7 +332,7 @@
             this.bShowPreView});
             this.tsvis.Location = new System.Drawing.Point(3, 35);
             this.tsvis.Name = "tsvis";
-            this.tsvis.Size = new System.Drawing.Size(367, 25);
+            this.tsvis.Size = new System.Drawing.Size(365, 25);
             this.tsvis.TabIndex = 1;
             // 
             // toolStripLabel1
