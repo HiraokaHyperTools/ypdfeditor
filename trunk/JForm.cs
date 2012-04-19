@@ -65,6 +65,8 @@ namespace yPDFEditor {
                 case TState.No:
                     tv.Picts.Clear();
                     Currentfp = null;
+                    fpTmppdf = Path.GetTempFileName();
+                    UtMarkTemp.Add(fpTmppdf);
                     Modified = false;
                     break;
             }
@@ -142,7 +144,7 @@ namespace yPDFEditor {
             }
 
             public bool Read() {
-                ProcessStartInfo psi = new ProcessStartInfo(pdfinfo_exe, " \"" + fp + "\"");
+                ProcessStartInfo psi = new ProcessStartInfo(pdfinfo_exe, " " + CygNUt.Quotes(fp));
                 psi.UseShellExecute = false;
                 psi.RedirectStandardOutput = true;
                 psi.CreateNoWindow = true;
@@ -160,6 +162,11 @@ namespace yPDFEditor {
                     return 0;
                 }
             }
+
+        }
+
+        class CygNUt {
+            internal static string Quotes(String fp) { return "\"" + fp.Replace("\\", "\\\\") + "\""; }
         }
 
         PDFExploder pdfexp = null;
@@ -282,35 +289,42 @@ namespace yPDFEditor {
             vsc.Panel2Collapsed = !bShowPreView.Checked;
         }
 
+        public byte[] GetPDF(int x) {
+            using (MemoryStream os = new MemoryStream()) {
+                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " " + CygNUt.Quotes(fpTmppdf) + " cat " + (1 + x) + " output -");
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
+                psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
+                Process p = Process.Start(psi);
+                UtRedir ste = new UtRedir(p.StandardError);
+                Stream si = p.StandardOutput.BaseStream;
+                byte[] bin = new byte[4000];
+                while (true) {
+                    int r = si.Read(bin, 0, bin.Length);
+                    if (r < 1) break;
+                    os.Write(bin, 0, r);
+                }
+                p.WaitForExit();
+                ste.Wait();
+
+                if (p.ExitCode == 0) {
+                    return os.ToArray();
+                }
+
+                throw new ApplicationException("pdftk failed (" + p.ExitCode + ")");
+            }
+        }
+
         private void tv_PictDrag(object sender, EventArgs e) {
             DataObject dat = new DataObject();
-            dat.SetData("PId", Process.GetCurrentProcess().Id);
-            dat.SetData("SelFirst", tv.SelFirst);
-            dat.SetData("SelLast", tv.SelLast);
+            PDFClip clip = new PDFClip();
+            clip.PId = Process.GetCurrentProcess().Id;
+            clip.SelFirst = tv.SelFirst;
+            clip.SelLast = tv.SelLast;
+            clip.GetPDF = GetPDF;
 
-            for (int x = tv.SelFirst; x <= tv.SelLast; x++) {
-                using (MemoryStream os = new MemoryStream()) {
-                    ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" cat " + (1 + x) + " output -");
-                    psi.CreateNoWindow = true;
-                    psi.UseShellExecute = false;
-                    psi.RedirectStandardOutput = true;
-                    psi.RedirectStandardError = true;
-                    Process p = Process.Start(psi);
-                    Stream si = p.StandardOutput.BaseStream;
-                    byte[] bin = new byte[4000];
-                    while (true) {
-                        int r = si.Read(bin, 0, bin.Length);
-                        if (r < 1) break;
-                        os.Write(bin, 0, r);
-                    }
-                    String errMsg = p.StandardError.ReadToEnd();
-                    p.WaitForExit();
-
-                    if (p.ExitCode == 0) {
-                        dat.SetData("pdf#" + x, os.ToArray());
-                    }
-                }
-            }
+            dat.SetData("PDFClip", clip);
 
             tv.DoDragDrop(dat, DragDropEffects.Scroll | DragDropEffects.Copy | DragDropEffects.Move);
 
@@ -337,13 +351,8 @@ namespace yPDFEditor {
                     }
                 }
 
-                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" cat " + cat + " output \"" + fpTmp2 + "\"");
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                Process p = Process.Start(psi);
-                p.WaitForExit();
 
-                if (p.ExitCode != 0) {
+                if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf)) {
                     MessageBox.Show(this, "削除に失敗しました。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
@@ -368,7 +377,7 @@ namespace yPDFEditor {
         }
 
         private void tv_DragEnter(object sender, DragEventArgs e) {
-            if (e.Data.GetDataPresent("PId") && e.Data.GetDataPresent("SelFirst") && e.Data.GetDataPresent("SelLast")) {
+            if (e.Data.GetDataPresent("PDFClip")) {
                 e.Effect = e.AllowedEffect & ((0 != (e.KeyState & 8)) ? DragDropEffects.Copy | DragDropEffects.Move : DragDropEffects.Move);
             }
             else if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
@@ -411,116 +420,116 @@ namespace yPDFEditor {
             try {
                 int iAt = iMark.Item + ((0 != (iMark.Location & (TvInsertMarkLocation.Right | TvInsertMarkLocation.Bottom))) ? 1 : 0);
 
-                bool isCopy = 0 != (e.Effect & DragDropEffects.Copy);
-
-                String[] alfp = e.Data.GetData(DataFormats.FileDrop) as String[];
-                if (alfp != null) {
-                    DialogResult res;
-                    if (Currentfp == null)
-                        res = DialogResult.OK;
-                    else if (iMark.Item >= 0)
-                        res = DialogResult.Yes;
-                    else
-                        using (OpenWayForm form = new OpenWayForm(true))
-                            res = form.ShowDialog();
-                    if (res == DialogResult.OK) {
-                        foreach (String fp in alfp) {
-                            Openf(fp);
-                            break;
-                        }
-                    }
-                    else if (res != DialogResult.Cancel) {
-                        bool fAppend = res == DialogResult.Retry;
-                        bool fInsertAfter = res == DialogResult.Yes;
-
-                        if (!fInsertAfter) {
-                            iAt = tv.Picts.Count;
-                        }
-
-                        using (WIPPanel wipp = new WIPPanel(tv))
-                            foreach (String fp in alfp) {
-                                EditAppendPDF(fp, iAt);
-                            }
-                    }
-                    return;
-                }
-                else {
-                    int iPId = (int)e.Data.GetData("PId");
-                    int iSelFirst = (int)e.Data.GetData("SelFirst");
-                    int iSelLast = (int)e.Data.GetData("SelLast");
-
-                    int cnt = iSelLast - iSelFirst + 1;
-
-                    if (iPId == Process.GetCurrentProcess().Id) {
-                        List<TvPict> al = new List<TvPict>();
-                        for (int x = iSelFirst; x <= iSelLast; x++) al.Add(tv.Picts[x]);
-
-                        if (isCopy) {
-                            using (WIPPanel wipp = new WIPPanel(tv))
-                                EditCopyPages(iAt, iSelFirst, iSelLast);
-                        }
-                        else {
-                            if (iSelFirst <= iAt && iAt <= iSelLast + 1) {
-
-                            }
-                            else {
-                                using (WIPPanel wipp = new WIPPanel(tv))
-                                    EditMovePages(iAt, iSelFirst, iSelLast);
-                            }
-                        }
-                    }
-                    else {
-                        String fpTmp2 = Path.GetTempFileName();
-                        UtMarkTemp.Add(fpTmp2);
-
-                        String inputs = "";
-                        String cat = "";
-                        int num = 2;
-                        for (int x = 0; x <= tv.Picts.Count; x++) {
-                            if (iAt == x) {
-                                for (int t = 0; t < cnt; t++) {
-                                    byte[] bin = CPUt.GetPDF(e.Data, iSelFirst + t);
-                                    String fpxTmp = Path.GetTempFileName();
-                                    UtMarkTemp.Add(fpxTmp);
-                                    File.WriteAllBytes(fpxTmp, bin);
-                                    inputs += " " + HIDGen.Generate(num) + "=\"" + fpxTmp + "\"";
-                                    cat += " " + HIDGen.Generate(num);
-                                    num++;
-                                }
-                            }
-                            if (x < tv.Picts.Count) {
-                                cat += " A" + (1 + x);
-                            }
-                        }
-
-                        ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " A=\"" + fpTmppdf + "\" " + inputs + " cat " + cat + " output \"" + fpTmp2 + "\"");
-                        psi.CreateNoWindow = true;
-                        psi.UseShellExecute = false;
-                        Process p = Process.Start(psi);
-                        p.WaitForExit();
-
-                        if (p.ExitCode == 0) {
-                            File.Delete(fpTmppdf);
-
-                            pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
-
-                            using (WIPPanel wipp = new WIPPanel(tv))
-                                for (int x = 0; x < cnt; x++) {
-                                    tv.Picts.Insert(iAt + x, new TvPict(pdfexp, x));
-                                }
-                            for (int i = 0; i < tv.Picts.Count; i++) {
-                                tv.Picts[i].Relocate(pdfexp, i);
-                            }
-                        }
-
-                        if (!isCopy) {
-                            e.Data.SetData("Pasted", (int)1);
-                        }
-                    }
-                }
+                DropIt(e, iAt);
             }
             finally {
                 tv.InsertMark = new TvInsertMark();
+            }
+        }
+
+        private void DropIt(DragEventArgs e, int iAt) {
+            bool isCopy = 0 != (e.Effect & DragDropEffects.Copy);
+
+            String[] alfp = e.Data.GetData(DataFormats.FileDrop) as String[];
+            if (alfp != null) {
+                DialogResult res;
+                if (Currentfp == null)
+                    res = DialogResult.OK;
+                else if (iAt >= 0)
+                    res = DialogResult.Yes;
+                else
+                    using (OpenWayForm form = new OpenWayForm(true))
+                        res = form.ShowDialog();
+                if (res == DialogResult.OK) {
+                    foreach (String fp in alfp) {
+                        Openf(fp);
+                        break;
+                    }
+                }
+                else if (res != DialogResult.Cancel) {
+                    bool fAppend = res == DialogResult.Retry;
+                    bool fInsertAfter = res == DialogResult.Yes;
+
+                    if (!fInsertAfter) {
+                        iAt = tv.Picts.Count;
+                    }
+
+                    using (WIPPanel wipp = new WIPPanel(tv))
+                        foreach (String fp in alfp) {
+                            EditAppendPDF(fp, iAt);
+                        }
+                }
+                return;
+            }
+            else {
+                PDFClip clip = (PDFClip)e.Data.GetData("PDFClip");
+                int iPId = clip.PId;
+                int iSelFirst = clip.SelFirst;
+                int iSelLast = clip.SelLast;
+
+                int cnt = iSelLast - iSelFirst + 1;
+
+                if (iPId == Process.GetCurrentProcess().Id) {
+                    List<TvPict> al = new List<TvPict>();
+                    for (int x = iSelFirst; x <= iSelLast; x++) al.Add(tv.Picts[x]);
+
+                    if (isCopy) {
+                        using (WIPPanel wipp = new WIPPanel(tv))
+                            EditCopyPages(iAt, iSelFirst, iSelLast);
+                    }
+                    else {
+                        if (iSelFirst <= iAt && iAt <= iSelLast + 1) {
+
+                        }
+                        else {
+                            using (WIPPanel wipp = new WIPPanel(tv))
+                                EditMovePages(iAt, iSelFirst, iSelLast);
+                        }
+                    }
+                }
+                else {
+                    String fpTmp2 = Path.GetTempFileName();
+                    UtMarkTemp.Add(fpTmp2);
+
+                    String cat = "";
+                    int num = 2;
+                    IDictionary<String, String> inppdf = new SortedDictionary<String, String>();
+                    for (int x = 0; x <= tv.Picts.Count; x++) {
+                        if (iAt == x) {
+                            for (int t = 0; t < cnt; t++) {
+                                byte[] bin = clip.GetPDF(iSelFirst + t);
+                                String fpxTmp = Path.GetTempFileName();
+                                UtMarkTemp.Add(fpxTmp);
+                                File.WriteAllBytes(fpxTmp, bin);
+                                inppdf[HIDGen.Generate(num)] = fpxTmp;
+                                cat += " " + HIDGen.Generate(num);
+                                num++;
+                            }
+                        }
+                        if (x < tv.Picts.Count) {
+                            cat += " A" + (1 + x);
+                        }
+                    }
+
+                    inppdf["A"] = fpTmppdf;
+                    if (new CPdftk().Cat3(fpTmp2, cat, inppdf)) {
+                        File.Delete(fpTmppdf);
+
+                        pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
+
+                        using (WIPPanel wipp = new WIPPanel(tv))
+                            for (int x = 0; x < cnt; x++) {
+                                tv.Picts.Insert(iAt + x, new TvPict(pdfexp, x));
+                            }
+                        for (int i = 0; i < tv.Picts.Count; i++) {
+                            tv.Picts[i].Relocate(pdfexp, i);
+                        }
+                    }
+
+                    if (!isCopy) {
+                        e.Data.SetData("Pasted", (int)1);
+                    }
+                }
             }
         }
 
@@ -556,13 +565,10 @@ namespace yPDFEditor {
                     }
                 }
 
-                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " A=\"" + fpTmppdf + "\" B=\"" + fp + "\" cat " + cat + " output \"" + fpTmp2 + "\"");
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                Process p = Process.Start(psi);
-                p.WaitForExit();
-
-                if (p.ExitCode == 0) {
+                IDictionary<String, String> inppdf = new SortedDictionary<String, String>();
+                inppdf["A"] = fpTmppdf;
+                inppdf["B"] = fp;
+                if (new CPdftk().Cat3(fpTmp2, cat, inppdf)) {
                     File.Delete(fpTmppdf);
 
                     pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
@@ -594,13 +600,7 @@ namespace yPDFEditor {
                 }
             }
 
-            ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" cat " + cat + " output \"" + fpTmp2 + "\"");
-            psi.CreateNoWindow = true;
-            psi.UseShellExecute = false;
-            Process p = Process.Start(psi);
-            p.WaitForExit();
-
-            if (p.ExitCode != 0) {
+            if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf)) {
                 return;
             }
 
@@ -639,13 +639,7 @@ namespace yPDFEditor {
                 }
             }
 
-            ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" cat " + cat + " output \"" + fpTmp2 + "\"");
-            psi.CreateNoWindow = true;
-            psi.UseShellExecute = false;
-            Process p = Process.Start(psi);
-            p.WaitForExit();
-
-            if (p.ExitCode != 0) {
+            if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf)) {
                 return;
             }
 
@@ -661,15 +655,6 @@ namespace yPDFEditor {
             }
             for (int x = 0; x < tv.Picts.Count; x++) {
                 tv.Picts[x].Relocate(pdfexp, x);
-            }
-        }
-
-        class CPUt {
-            internal static byte[] GetPDF(IDataObject dat, int iSel) {
-                byte[] bin = dat.GetData("pdf#" + iSel) as byte[];
-                if (bin == null) throw new NotSupportedException();
-
-                return bin;
             }
         }
 
@@ -713,13 +698,7 @@ namespace yPDFEditor {
                     }
                 }
 
-                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" cat " + cat + " output \"" + fpTmp2 + "\"");
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                Process p = Process.Start(psi);
-                p.WaitForExit();
-
-                if (p.ExitCode != 0) {
+                if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf)) {
                     MessageBox.Show(this, "回転に失敗しました。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
@@ -799,13 +778,7 @@ namespace yPDFEditor {
                     }
                 }
 
-                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" cat " + cat + " output \"" + fpTmp2 + "\"");
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                Process p = Process.Start(psi);
-                p.WaitForExit();
-
-                if (p.ExitCode != 0) {
+                if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf)) {
                     MessageBox.Show(this, "ページの取り出しに失敗しました。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
@@ -874,13 +847,7 @@ namespace yPDFEditor {
                                         String fpTmp2 = Path.GetTempFileName();
                                         UtMarkTemp.Add(fpTmp2);
 
-                                        ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " \"" + fpTmppdf + "\" \"" + fp + "\" cat output \"" + fpTmp2 + "\"");
-                                        psi.CreateNoWindow = true;
-                                        psi.UseShellExecute = false;
-                                        Process p = Process.Start(psi);
-                                        p.WaitForExit();
-
-                                        if (p.ExitCode == 0) {
+                                        if (new CPdftk().Cat(fpTmp2, fpTmppdf, fp)) {
                                             File.Delete(fpTmppdf);
 
                                             pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
@@ -921,6 +888,138 @@ namespace yPDFEditor {
 
         private void JForm_FormClosed(object sender, FormClosedEventArgs e) {
             UtMarkTemp.Cleanup();
+        }
+
+        private void bAppend_Click(object sender, EventArgs e) {
+            if (ofdAppend.ShowDialog(this) == DialogResult.OK) {
+                String[] alfp = ofdAppend.FileNames;
+                using (WIPPanel wip = new WIPPanel(this)) {
+                    AppendFiles(alfp);
+                }
+            }
+        }
+
+        private void bAppend_DragDrop(object sender, DragEventArgs e) {
+            DropIt(e, tv.Picts.Count);
+            return;
+        }
+
+        class UtRedir {
+            Thread t;
+            String s;
+
+            public UtRedir(TextReader rr) {
+                (t = new Thread((ThreadStart)delegate {
+                    s = rr.ReadToEnd();
+                })).Start();
+            }
+
+            public String Wait() {
+                t.Join();
+                return s;
+            }
+        }
+
+        class PVUt {
+            internal static bool PGExists(String fp) {
+                return new FileInfo(fp).Length != 0;
+            }
+        }
+
+        private void AppendFiles(String[] alfp) {
+            foreach (String fp in alfp) {
+                if (File.Exists(fp)) {
+                    PDFInfo pdfi = new PDFInfo(fp);
+                    if (pdfi.Read()) {
+                        int cnt = pdfi.PageCount;
+
+                        String fpTmp2 = Path.GetTempFileName();
+                        UtMarkTemp.Add(fpTmp2);
+
+                        if (new CPdftk().Cat(fpTmp2, fpTmppdf, fp)) {
+                            File.Delete(fpTmppdf);
+
+                            pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
+
+                            for (int i = 0; i < cnt; i++) {
+                                tv.Picts.Add(new TvPict(pdfexp, tv.Picts.Count));
+                            }
+                            for (int i = 0; i < tv.Picts.Count; i++) {
+                                tv.Picts[i].Relocate(pdfexp, i);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        class CPdftk {
+            UtRedir sto;
+            UtRedir ste;
+            Process p;
+            ProcessStartInfo psi;
+
+            internal bool Cat(String fpTmp2, params String[] alfpIn) {
+                String a = "";
+                foreach (String fpIn in alfpIn) {
+                    a += " " + (PVUt.PGExists(fpIn) ? CygNUt.Quotes(fpIn) : "");
+                }
+                a += " cat output " + CygNUt.Quotes(fpTmp2);
+
+                psi = new ProcessStartInfo(pdftk_exe, a);
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
+                psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
+                p = Process.Start(psi);
+                sto = new UtRedir(p.StandardOutput);
+                ste = new UtRedir(p.StandardError);
+                p.WaitForExit();
+                sto.Wait();
+                ste.Wait();
+
+                return p.ExitCode == 0;
+            }
+
+            internal bool Cat2(String fpTmp2, String cat, String fpTmppdf) {
+                String a = " " + CygNUt.Quotes(fpTmppdf) + " cat " + cat + " output " + CygNUt.Quotes(fpTmp2) + "";
+
+                psi = new ProcessStartInfo(pdftk_exe, a);
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
+                psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
+                p = Process.Start(psi);
+                sto = new UtRedir(p.StandardOutput);
+                ste = new UtRedir(p.StandardError);
+                p.WaitForExit();
+                sto.Wait();
+                ste.Wait();
+
+                return p.ExitCode == 0;
+            }
+
+            internal bool Cat3(String fpTmp2, String cat, IDictionary<String, String> inppdf) {
+                String a = "";
+                foreach (KeyValuePair<String, String> kv in inppdf) {
+                    a += " " + kv.Key + "=" + CygNUt.Quotes(kv.Value);
+                }
+                a += " cat " + cat + " output " + CygNUt.Quotes(fpTmp2) + "";
+
+                psi = new ProcessStartInfo(pdftk_exe, a);
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
+                psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
+                p = Process.Start(psi);
+                sto = new UtRedir(p.StandardOutput);
+                ste = new UtRedir(p.StandardError);
+                p.WaitForExit();
+                sto.Wait();
+                ste.Wait();
+
+                return p.ExitCode == 0;
+            }
         }
     }
 
@@ -1003,4 +1102,13 @@ namespace yPDFEditor {
         }
     }
 
+    public delegate byte[] GetPDFDelegate(int i);
+
+    public class PDFClip : MarshalByRefObject {
+        public int PId;
+        public int SelFirst;
+        public int SelLast;
+
+        public GetPDFDelegate GetPDF;
+    }
 }

@@ -62,9 +62,11 @@ namespace yPDFEditor {
                             isUp = true;
                         }
 
+                        bool itsMe = e.NewIndex == SelFirst || e.NewIndex == SelLast;
+
                         LayoutClient();
 
-                        if (isUp)
+                        if (isUp || itsMe)
                             if (SelChanged != null)
                                 SelChanged(this, e);
 
@@ -288,11 +290,11 @@ namespace yPDFEditor {
                     Math.Min(pt0.Y, pt1.Y),
                     Math.Max(pt0.X, pt1.X),
                     Math.Max(pt0.Y, pt1.Y)
-                    );
+                    ) ;
             }
         }
 
-        Pen pSelFoc = new Pen(Color.FromArgb(50, 50, 250));
+        Pen pSelFoc = new Pen(Color.FromArgb(50, 50, 250 ));
         Pen pSel = new Pen(Color.FromArgb(150, 150, 200));
 
         private void ThumbView_Resize(object sender, EventArgs e) {
