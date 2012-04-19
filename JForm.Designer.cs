@@ -30,6 +30,8 @@
             this.tssl = new System.Windows.Forms.ToolStripStatusLabel();
             this.vsc = new System.Windows.Forms.SplitContainer();
             this.tv = new yPDFEditor.ThumbView();
+            this.labelVSep = new System.Windows.Forms.Label();
+            this.bAppend = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pvw = new yPDFEditor.PreViewer();
             this.tstop = new System.Windows.Forms.ToolStrip();
@@ -58,6 +60,7 @@
             this.ofdPict = new System.Windows.Forms.OpenFileDialog();
             this.mThumb = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sfdPict = new System.Windows.Forms.SaveFileDialog();
+            this.ofdAppend = new System.Windows.Forms.OpenFileDialog();
             this.tsc.BottomToolStripPanel.SuspendLayout();
             this.tsc.ContentPanel.SuspendLayout();
             this.tsc.TopToolStripPanel.SuspendLayout();
@@ -122,6 +125,8 @@
             // vsc.Panel1
             // 
             this.vsc.Panel1.Controls.Add(this.tv);
+            this.vsc.Panel1.Controls.Add(this.labelVSep);
+            this.vsc.Panel1.Controls.Add(this.bAppend);
             // 
             // vsc.Panel2
             // 
@@ -141,7 +146,7 @@
             this.tv.Name = "tv";
             this.tv.Picts = null;
             this.tv.Sel2 = -1;
-            this.tv.Size = new System.Drawing.Size(260, 438);
+            this.tv.Size = new System.Drawing.Size(260, 391);
             this.tv.SSel = -1;
             this.tv.TabIndex = 2;
             this.tv.QueryContinueDrag += new System.Windows.Forms.QueryContinueDragEventHandler(this.tv_QueryContinueDrag);
@@ -152,6 +157,31 @@
             this.tv.DragDrop += new System.Windows.Forms.DragEventHandler(this.tv_DragDrop);
             this.tv.DragLeave += new System.EventHandler(this.tv_DragLeave);
             this.tv.DragEnter += new System.Windows.Forms.DragEventHandler(this.tv_DragEnter);
+            // 
+            // labelVSep
+            // 
+            this.labelVSep.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.labelVSep.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.labelVSep.Location = new System.Drawing.Point(0, 391);
+            this.labelVSep.Name = "labelVSep";
+            this.labelVSep.Size = new System.Drawing.Size(260, 1);
+            this.labelVSep.TabIndex = 4;
+            // 
+            // bAppend
+            // 
+            this.bAppend.AllowDrop = true;
+            this.bAppend.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.bAppend.FlatAppearance.BorderSize = 0;
+            this.bAppend.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.bAppend.Location = new System.Drawing.Point(0, 392);
+            this.bAppend.Name = "bAppend";
+            this.bAppend.Size = new System.Drawing.Size(260, 46);
+            this.bAppend.TabIndex = 3;
+            this.bAppend.Text = "--- ページを最後に追加 ---";
+            this.bAppend.UseVisualStyleBackColor = true;
+            this.bAppend.Click += new System.EventHandler(this.bAppend_Click);
+            this.bAppend.DragDrop += new System.Windows.Forms.DragEventHandler(this.bAppend_DragDrop);
+            this.bAppend.DragEnter += new System.Windows.Forms.DragEventHandler(this.tv_DragEnter);
             // 
             // panel1
             // 
@@ -418,6 +448,12 @@
             this.sfdPict.DefaultExt = "pdf";
             this.sfdPict.Filter = "*.pdf|*.pdf";
             // 
+            // ofdAppend
+            // 
+            this.ofdAppend.DefaultExt = "pdf";
+            this.ofdAppend.Filter = "*.pdf|*.pdf";
+            this.ofdAppend.Multiselect = true;
+            // 
             // JForm
             // 
             this.AllowDrop = true;
@@ -489,6 +525,9 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripSplitButton bMail;
         private System.Windows.Forms.ToolStripMenuItem bMailContents;
+        private System.Windows.Forms.Label labelVSep;
+        private System.Windows.Forms.Button bAppend;
+        private System.Windows.Forms.OpenFileDialog ofdAppend;
     }
 }
 

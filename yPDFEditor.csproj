@@ -48,6 +48,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -155,6 +156,13 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="1.ico" />
+    <Content Include="GNU2\cyggcc_s-1.dll" />
+    <Content Include="GNU2\cygiconv-2.dll" />
+    <Content Include="GNU2\cygwin1.dll" />
+    <Content Include="GNU2\cygz.dll" />
+    <Content Include="GNU2\pdftk.exe" />
+    <Content Include="GNU\pdfinfo.exe" />
+    <Content Include="GNU\pdftoppm.exe" />
     <Content Include="MAPISendMailSa.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
