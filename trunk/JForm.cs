@@ -144,12 +144,14 @@ namespace yPDFEditor {
             }
 
             public bool Read() {
-                ProcessStartInfo psi = new ProcessStartInfo(pdfinfo_exe, " " + CygNUt.Quotes(fp));
+                ProcessStartInfo psi = new ProcessStartInfo(pdfinfo_exe, " " + WinNUt.Quotes(fp));
                 psi.UseShellExecute = false;
                 psi.RedirectStandardOutput = true;
+                psi.RedirectStandardError = true;
                 psi.CreateNoWindow = true;
                 Process p = Process.Start(psi);
                 rows = p.StandardOutput.ReadToEnd();
+                String errs = p.StandardError.ReadToEnd();
                 p.WaitForExit();
                 return p.ExitCode == 0;
             }
@@ -163,6 +165,10 @@ namespace yPDFEditor {
                 }
             }
 
+        }
+
+        class WinNUt {
+            internal static string Quotes(String fp) { return "\"" + fp + "\""; }
         }
 
         class CygNUt {
