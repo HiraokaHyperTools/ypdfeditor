@@ -8,8 +8,8 @@
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
 
-!define VER    "0.5"
-!define APPVER "0_5"
+!define VER    "0.5'"
+!define APPVER "0_5'"
 
 !define MIME "application/pdf"
 
@@ -136,11 +136,16 @@ Section "${APP}" ;No components page, name is not important
   
 SectionEnd ; end the section
 
-Section "関連付け(現在のアカウント)"
+Section /o "PDFへ強く関連付け"
   WriteRegStr HKCU "Software\Classes\${EXT}" "" "${APP}"
   WriteRegStr HKCU "Software\Classes\${EXT}" "Content Type" "${MIME}"
+SectionEnd
+
+Section ""
   WriteRegStr HKCU "Software\Classes\${EXT}\OpenWithProgids" "${APP}" ""
-  
+
+  WriteRegStr HKCU "Software\Classes\Applications\${APP}.exe\shell\open\command" "" '"$INSTDIR\${APP}.exe" "%1"'
+
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${EXT}" ""
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${EXT}" "Progid"
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${EXT}" "Application"
@@ -149,7 +154,7 @@ Section "関連付け(現在のアカウント)"
   !insertmacro UPDATEFILEASSOC
 SectionEnd
 
-Section "スタートメニュー(現在のアカウント)"
+Section "スタートメニューへ登録"
   CreateDirectory "$SMPROGRAMS\${TITLE}"
   CreateShortCut "$SMPROGRAMS\${TITLE}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   CreateShortCut "$SMPROGRAMS\${TITLE}\起動.lnk" "$INSTDIR\${APP}.exe" "" "$INSTDIR\${APP}.exe" 0
@@ -171,6 +176,11 @@ Section "Uninstall"
   DeleteRegKey HKCU "Software\HIRAOKA HYPERS TOOLS, Inc.\${APP}"
   
   DeleteRegValue HKCU "Software\Classes\${EXT}\OpenWithProgids" "${APP}"
+
+  DeleteRegKey HKCU "Software\Classes\Applications\${APP}.exe\shell\open\command"
+  DeleteRegKey HKCU "Software\Classes\Applications\${APP}.exe\shell\open"
+  DeleteRegKey HKCU "Software\Classes\Applications\${APP}.exe\shell"
+  DeleteRegKey HKCU "Software\Classes\Applications\${APP}.exe"
 
   ReadRegStr $0 HKCU "Software\Classes\${EXT}" ""
   ${If} $0 == "${APP}"
