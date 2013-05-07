@@ -610,6 +610,8 @@ namespace yPDFEditor {
                 return;
             }
 
+            Debug.Assert(File.Exists(fpTmppdf));
+
             File.Delete(fpTmppdf);
 
             pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
@@ -626,6 +628,52 @@ namespace yPDFEditor {
                 iAt -= cnt;
             for (int x = 0; x < al.Count; x++) {
                 tv.Picts.Insert(iAt + x, al[x]);
+            }
+            for (int x = 0; x < tv.Picts.Count; x++) {
+                tv.Picts[x].Relocate(pdfexp, x);
+            }
+        }
+
+        private void EditSetPages(int[] indices) {
+            String fpTmp2 = Path.GetTempFileName();
+            UtMarkTemp.Add(fpTmp2);
+
+            List<int> left = new List<int>();
+            List<int> newi = new List<int>();
+            for (int x = 0; x < tv.Picts.Count; x++) {
+                int pi = Array.IndexOf<int>(indices, 1 + x);
+                if (pi >= 0) {
+                    newi.Add(1 + pi);
+                }
+                else {
+                    left.Add(1 + x);
+                }
+            }
+
+            String cat = "";
+            for (int x = 0; x < newi.Count; x++) {
+                cat += " " + newi[x];
+            }
+
+            if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf)) {
+                return;
+            }
+
+            Debug.Assert(File.Exists(fpTmppdf));
+
+            File.Delete(fpTmppdf);
+
+            pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
+
+            List<TvPict> al = new List<TvPict>(tv.Picts);
+
+            tv.Picts.Clear();
+
+            foreach (int i in newi) tv.Picts.Add(al[i - 1]);
+            foreach (int i in left) tv.Picts.Add(al[i - 1]);
+
+            for (int x = 0; x < tv.Picts.Count; x++) {
+                tv.Picts[x].Relocate(pdfexp, x);
             }
         }
 
@@ -1025,6 +1073,18 @@ namespace yPDFEditor {
                 ste.Wait();
 
                 return p.ExitCode == 0;
+            }
+        }
+
+        private void bSort_Click(object sender, EventArgs e) {
+            using (JSort form = new JSort()) {
+                form.Set(tv.Picts);
+                int cx = tv.Picts.Count;
+                switch (form.ShowDialog()) {
+                    case DialogResult.OK:
+                        EditSetPages(form.Indices);
+                        break;
+                }
             }
         }
     }

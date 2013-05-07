@@ -24,6 +24,11 @@
         /// </summary>
         private void InitializeComponent() {
             this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+            System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+            System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
+            System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+            System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JForm));
             this.tsc = new System.Windows.Forms.ToolStripContainer();
             this.ss = new System.Windows.Forms.StatusStrip();
@@ -35,32 +40,34 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.pvw = new yPDFEditor.PreViewer();
             this.tstop = new System.Windows.Forms.ToolStrip();
-            this.bNew = new System.Windows.Forms.ToolStripButton();
-            this.bOpenf = new System.Windows.Forms.ToolStripButton();
-            this.bSave = new System.Windows.Forms.ToolStripButton();
-            this.bSaveas = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.bRotLeft = new System.Windows.Forms.ToolStripButton();
-            this.bRotRight = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.bMail = new System.Windows.Forms.ToolStripSplitButton();
-            this.bMailContents = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
-            this.bDelp = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.bAbout = new System.Windows.Forms.ToolStripButton();
             this.tsvis = new System.Windows.Forms.ToolStrip();
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             this.tscRate = new System.Windows.Forms.ToolStripComboBox();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
-            this.bzoomIn = new System.Windows.Forms.ToolStripButton();
-            this.bzoomOut = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
-            this.bShowPreView = new System.Windows.Forms.ToolStripButton();
             this.ofdPict = new System.Windows.Forms.OpenFileDialog();
             this.mThumb = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sfdPict = new System.Windows.Forms.SaveFileDialog();
             this.ofdAppend = new System.Windows.Forms.OpenFileDialog();
+            this.bNew = new System.Windows.Forms.ToolStripButton();
+            this.bOpenf = new System.Windows.Forms.ToolStripButton();
+            this.bSave = new System.Windows.Forms.ToolStripButton();
+            this.bSaveas = new System.Windows.Forms.ToolStripButton();
+            this.bRotLeft = new System.Windows.Forms.ToolStripButton();
+            this.bRotRight = new System.Windows.Forms.ToolStripButton();
+            this.bMail = new System.Windows.Forms.ToolStripSplitButton();
+            this.bMailContents = new System.Windows.Forms.ToolStripMenuItem();
+            this.bDelp = new System.Windows.Forms.ToolStripButton();
+            this.bAbout = new System.Windows.Forms.ToolStripButton();
+            this.bzoomIn = new System.Windows.Forms.ToolStripButton();
+            this.bzoomOut = new System.Windows.Forms.ToolStripButton();
+            this.bShowPreView = new System.Windows.Forms.ToolStripButton();
+            this.bSort = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.tsc.BottomToolStripPanel.SuspendLayout();
             this.tsc.ContentPanel.SuspendLayout();
             this.tsc.TopToolStripPanel.SuspendLayout();
@@ -74,6 +81,31 @@
             this.tsvis.SuspendLayout();
             this.SuspendLayout();
             // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 41);
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 41);
+            // 
+            // toolStripSeparator6
+            // 
+            toolStripSeparator6.Name = "toolStripSeparator6";
+            toolStripSeparator6.Size = new System.Drawing.Size(6, 41);
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(6, 41);
+            // 
+            // toolStripSeparator7
+            // 
+            toolStripSeparator7.Name = "toolStripSeparator7";
+            toolStripSeparator7.Size = new System.Drawing.Size(6, 41);
+            // 
             // tsc
             // 
             // 
@@ -84,11 +116,11 @@
             // tsc.ContentPanel
             // 
             this.tsc.ContentPanel.Controls.Add(this.vsc);
-            this.tsc.ContentPanel.Size = new System.Drawing.Size(789, 432);
+            this.tsc.ContentPanel.Size = new System.Drawing.Size(860, 432);
             this.tsc.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tsc.Location = new System.Drawing.Point(0, 0);
             this.tsc.Name = "tsc";
-            this.tsc.Size = new System.Drawing.Size(789, 522);
+            this.tsc.Size = new System.Drawing.Size(860, 522);
             this.tsc.TabIndex = 0;
             this.tsc.Text = "toolStripContainer1";
             // 
@@ -104,7 +136,7 @@
             this.tssl});
             this.ss.Location = new System.Drawing.Point(0, 0);
             this.ss.Name = "ss";
-            this.ss.Size = new System.Drawing.Size(789, 23);
+            this.ss.Size = new System.Drawing.Size(860, 23);
             this.ss.TabIndex = 0;
             this.ss.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.ss_ItemClicked);
             // 
@@ -131,7 +163,7 @@
             // vsc.Panel2
             // 
             this.vsc.Panel2.Controls.Add(this.panel1);
-            this.vsc.Size = new System.Drawing.Size(789, 432);
+            this.vsc.Size = new System.Drawing.Size(860, 432);
             this.vsc.SplitterDistance = 262;
             this.vsc.SplitterWidth = 6;
             this.vsc.TabIndex = 0;
@@ -189,7 +221,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(519, 430);
+            this.panel1.Size = new System.Drawing.Size(590, 430);
             this.panel1.TabIndex = 2;
             this.panel1.TabStop = true;
             // 
@@ -200,7 +232,7 @@
             this.pvw.Location = new System.Drawing.Point(0, 0);
             this.pvw.Name = "pvw";
             this.pvw.Pic = null;
-            this.pvw.Size = new System.Drawing.Size(519, 430);
+            this.pvw.Size = new System.Drawing.Size(590, 430);
             this.pvw.TabIndex = 0;
             this.pvw.FitCnfChanged += new System.EventHandler(this.preViewer1_FitCnfChanged);
             // 
@@ -212,20 +244,98 @@
             this.bOpenf,
             this.bSave,
             this.bSaveas,
-            this.toolStripSeparator1,
+            toolStripSeparator1,
             this.bRotLeft,
             this.bRotRight,
-            this.toolStripSeparator2,
+            toolStripSeparator2,
             this.bMail,
-            this.toolStripSeparator6,
+            toolStripSeparator6,
             this.bDelp,
-            this.toolStripSeparator3,
+            toolStripSeparator7,
+            this.bSort,
+            toolStripSeparator3,
             this.bAbout});
             this.tstop.Location = new System.Drawing.Point(0, 0);
             this.tstop.Name = "tstop";
-            this.tstop.Size = new System.Drawing.Size(789, 41);
+            this.tstop.Size = new System.Drawing.Size(860, 41);
             this.tstop.Stretch = true;
             this.tstop.TabIndex = 0;
+            // 
+            // tsvis
+            // 
+            this.tsvis.Dock = System.Windows.Forms.DockStyle.None;
+            this.tsvis.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripLabel1,
+            this.tscRate,
+            this.toolStripSeparator4,
+            this.bzoomIn,
+            this.bzoomOut,
+            this.toolStripSeparator5,
+            this.bShowPreView});
+            this.tsvis.Location = new System.Drawing.Point(0, 41);
+            this.tsvis.Name = "tsvis";
+            this.tsvis.Size = new System.Drawing.Size(860, 26);
+            this.tsvis.Stretch = true;
+            this.tsvis.TabIndex = 1;
+            // 
+            // toolStripLabel1
+            // 
+            this.toolStripLabel1.Name = "toolStripLabel1";
+            this.toolStripLabel1.Size = new System.Drawing.Size(92, 23);
+            this.toolStripLabel1.Text = "画像の大きさ：";
+            // 
+            // tscRate
+            // 
+            this.tscRate.DropDownHeight = 199;
+            this.tscRate.IntegralHeight = false;
+            this.tscRate.Items.AddRange(new object[] {
+            "頁全体",
+            "頁幅",
+            "25 %",
+            "37 %",
+            "50 %",
+            "75 %",
+            "100 %",
+            "150 %",
+            "200 %",
+            "300 %",
+            "400 %"});
+            this.tscRate.Name = "tscRate";
+            this.tscRate.Size = new System.Drawing.Size(87, 26);
+            this.tscRate.SelectedIndexChanged += new System.EventHandler(this.tscRate_SelectedIndexChanged);
+            this.tscRate.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tscRate_KeyDown);
+            this.tscRate.Validating += new System.ComponentModel.CancelEventHandler(this.tscRate_Validating);
+            // 
+            // toolStripSeparator4
+            // 
+            this.toolStripSeparator4.Name = "toolStripSeparator4";
+            this.toolStripSeparator4.Size = new System.Drawing.Size(6, 26);
+            // 
+            // toolStripSeparator5
+            // 
+            this.toolStripSeparator5.Name = "toolStripSeparator5";
+            this.toolStripSeparator5.Size = new System.Drawing.Size(6, 26);
+            // 
+            // ofdPict
+            // 
+            this.ofdPict.DefaultExt = "pdf";
+            this.ofdPict.Filter = "*.pdf|*.pdf";
+            // 
+            // mThumb
+            // 
+            this.mThumb.Name = "contextMenuStrip1";
+            this.mThumb.Size = new System.Drawing.Size(61, 4);
+            // 
+            // sfdPict
+            // 
+            this.sfdPict.DefaultExt = "pdf";
+            this.sfdPict.Filter = "*.pdf|*.pdf";
+            // 
+            // ofdAppend
+            // 
+            this.ofdAppend.DefaultExt = "pdf";
+            this.ofdAppend.Filter = "*.pdf|*.pdf";
+            this.ofdAppend.Multiselect = true;
             // 
             // bNew
             // 
@@ -269,11 +379,6 @@
             this.bSaveas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.bSaveas.Click += new System.EventHandler(this.bSaveas_Click);
             // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 41);
-            // 
             // bRotLeft
             // 
             this.bRotLeft.Image = global::yPDFEditor.Properties.Resources.TLeft;
@@ -294,11 +399,6 @@
             this.bRotRight.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.bRotRight.Click += new System.EventHandler(this.bRotLeft_Click);
             // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 41);
-            // 
             // bMail
             // 
             this.bMail.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -318,11 +418,6 @@
             this.bMailContents.Text = "この文書をメール送信";
             this.bMailContents.Click += new System.EventHandler(this.bMailContents_Click);
             // 
-            // toolStripSeparator6
-            // 
-            this.toolStripSeparator6.Name = "toolStripSeparator6";
-            this.toolStripSeparator6.Size = new System.Drawing.Size(6, 41);
-            // 
             // bDelp
             // 
             this.bDelp.Image = global::yPDFEditor.Properties.Resources.DeleteHS;
@@ -332,11 +427,6 @@
             this.bDelp.Text = "ページ削除";
             this.bDelp.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.bDelp.Click += new System.EventHandler(this.bDelp_Click);
-            // 
-            // toolStripSeparator3
-            // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 41);
             // 
             // bAbout
             // 
@@ -348,56 +438,6 @@
             this.bAbout.Text = "情報";
             this.bAbout.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.bAbout.Click += new System.EventHandler(this.bAbout_Click);
-            // 
-            // tsvis
-            // 
-            this.tsvis.Dock = System.Windows.Forms.DockStyle.None;
-            this.tsvis.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripLabel1,
-            this.tscRate,
-            this.toolStripSeparator4,
-            this.bzoomIn,
-            this.bzoomOut,
-            this.toolStripSeparator5,
-            this.bShowPreView});
-            this.tsvis.Location = new System.Drawing.Point(0, 41);
-            this.tsvis.Name = "tsvis";
-            this.tsvis.Size = new System.Drawing.Size(789, 26);
-            this.tsvis.Stretch = true;
-            this.tsvis.TabIndex = 1;
-            // 
-            // toolStripLabel1
-            // 
-            this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(92, 23);
-            this.toolStripLabel1.Text = "画像の大きさ：";
-            // 
-            // tscRate
-            // 
-            this.tscRate.DropDownHeight = 199;
-            this.tscRate.IntegralHeight = false;
-            this.tscRate.Items.AddRange(new object[] {
-            "頁全体",
-            "頁幅",
-            "25 %",
-            "37 %",
-            "50 %",
-            "75 %",
-            "100 %",
-            "150 %",
-            "200 %",
-            "300 %",
-            "400 %"});
-            this.tscRate.Name = "tscRate";
-            this.tscRate.Size = new System.Drawing.Size(87, 26);
-            this.tscRate.SelectedIndexChanged += new System.EventHandler(this.tscRate_SelectedIndexChanged);
-            this.tscRate.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tscRate_KeyDown);
-            this.tscRate.Validating += new System.ComponentModel.CancelEventHandler(this.tscRate_Validating);
-            // 
-            // toolStripSeparator4
-            // 
-            this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(6, 26);
             // 
             // bzoomIn
             // 
@@ -417,11 +457,6 @@
             this.bzoomOut.Text = "縮小";
             this.bzoomOut.Click += new System.EventHandler(this.bzoomOut_Click);
             // 
-            // toolStripSeparator5
-            // 
-            this.toolStripSeparator5.Name = "toolStripSeparator5";
-            this.toolStripSeparator5.Size = new System.Drawing.Size(6, 26);
-            // 
             // bShowPreView
             // 
             this.bShowPreView.Checked = true;
@@ -434,33 +469,22 @@
             this.bShowPreView.Text = "画像を表示";
             this.bShowPreView.Click += new System.EventHandler(this.bShowPreView_Click);
             // 
-            // ofdPict
+            // bSort
             // 
-            this.ofdPict.DefaultExt = "pdf";
-            this.ofdPict.Filter = "*.pdf|*.pdf";
-            // 
-            // mThumb
-            // 
-            this.mThumb.Name = "contextMenuStrip1";
-            this.mThumb.Size = new System.Drawing.Size(61, 4);
-            // 
-            // sfdPict
-            // 
-            this.sfdPict.DefaultExt = "pdf";
-            this.sfdPict.Filter = "*.pdf|*.pdf";
-            // 
-            // ofdAppend
-            // 
-            this.ofdAppend.DefaultExt = "pdf";
-            this.ofdAppend.Filter = "*.pdf|*.pdf";
-            this.ofdAppend.Multiselect = true;
+            this.bSort.Image = global::yPDFEditor.Properties.Resources.SplitSubdocumentHS;
+            this.bSort.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.bSort.Name = "bSort";
+            this.bSort.Size = new System.Drawing.Size(48, 38);
+            this.bSort.Text = "ソート";
+            this.bSort.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.bSort.Click += new System.EventHandler(this.bSort_Click);
             // 
             // JForm
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(789, 522);
+            this.ClientSize = new System.Drawing.Size(860, 522);
             this.Controls.Add(this.tsc);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "JForm";
@@ -499,12 +523,9 @@
         private System.Windows.Forms.ToolStripButton bNew;
         private System.Windows.Forms.ToolStripButton bOpenf;
         private System.Windows.Forms.ToolStripButton bSave;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton bRotLeft;
         private System.Windows.Forms.ToolStripButton bRotRight;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripButton bDelp;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton bAbout;
         private System.Windows.Forms.OpenFileDialog ofdPict;
         private ThumbView tv;
@@ -523,12 +544,12 @@
         private System.Windows.Forms.ContextMenuStrip mThumb;
         private System.Windows.Forms.SaveFileDialog sfdPict;
         private System.Windows.Forms.ToolStripButton bSaveas;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripSplitButton bMail;
         private System.Windows.Forms.ToolStripMenuItem bMailContents;
         private System.Windows.Forms.Label labelVSep;
         private System.Windows.Forms.Button bAppend;
         private System.Windows.Forms.OpenFileDialog ofdAppend;
+        private System.Windows.Forms.ToolStripButton bSort;
     }
 }
 
