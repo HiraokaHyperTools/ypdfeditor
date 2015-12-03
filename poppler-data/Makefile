@@ -1,26 +1,28 @@
 PACKAGE    = poppler-data
-VERSION    = 0.4.5
+VERSION    = 0.4.7
 distdir    = $(PACKAGE)-$(VERSION)
 prefix     = /usr/local
 datadir    = $(prefix)/share
 pkgdatadir = $(datadir)/poppler
 
-all :
+all : poppler-data.pc
 
-install :
+install : all
 	install -d -m 0755 $(DESTDIR)$(pkgdatadir)/cidToUnicode
 	install -m 0644 $(cid-to-unicode-files) $(DESTDIR)$(pkgdatadir)/cidToUnicode
 	install -d -m 0755 $(DESTDIR)$(pkgdatadir)/nameToUnicode
 	install -m 0644 $(name-to-unicode-files) $(DESTDIR)$(pkgdatadir)/nameToUnicode
 	install -d -m 0755 $(DESTDIR)$(pkgdatadir)/unicodeMap
 	install -m 0644 $(unicode-map-files) $(DESTDIR)$(pkgdatadir)/unicodeMap
+	install -d -m 0755 $(DESTDIR)$(datadir)/pkgconfig
+	install -m 0644 poppler-data.pc $(DESTDIR)$(datadir)/pkgconfig
 
 	for f in $(cmap-files); do					    \
 		install -d -m 0755 $(DESTDIR)$(pkgdatadir)/`dirname $$f`; \
 		install -m 0644 $$f $(DESTDIR)$(pkgdatadir)/$$f;	    \
 	done
 
-distdir : $(DISTFILES)
+distdir : $(DISTFILES) all
 	rm -rf $(distdir)
 	mkdir $(distdir)
 	for f in $(DISTFILES); do			\
@@ -34,6 +36,15 @@ dist : distdir
 
 clean :
 	rm -rf $(distdir)
+
+# poppler-data.pc is not a real PHONY target, but this trick
+# allows to force-generate it when needed.
+.PHONY: poppler-data.pc
+poppler-data.pc : poppler-data.pc.in
+	sed -e 's!@prefix@!$(prefix)!g' \
+		-e 's!@pkgdatadir@!$(pkgdatadir)!g' \
+		-e 's/@VERSION@/$(VERSION)/g' \
+		poppler-data.pc.in > poppler-data.pc
 
 unicode-map-files =				\
 	unicodeMap/Big5				\
@@ -292,6 +303,8 @@ cid-to-unicode-files =				\
 	cidToUnicode/Adobe-Korea1
 
 DISTFILES =					\
+	poppler-data.pc.in			\
+	poppler-data.pc				\
 	Makefile				\
 	README					\
 	COPYING					\
