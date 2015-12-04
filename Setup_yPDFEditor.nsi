@@ -8,8 +8,8 @@
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
 
-!define VER    "0.8"
-!define APPVER "0_8"
+!define VER    "0.9"
+!define APPVER "0_9"
 
 !define MIME "application/pdf"
 
@@ -105,10 +105,8 @@ Section "${APP}" ;No components page, name is not important
   File "GNU\pdfinfo.exe"
   File "GNU\pdftoppm.exe"
 
-  File "GNU2\cyggcc_s-1.dll"
-  File "GNU2\cygiconv-2.dll"
-  File "GNU2\cygwin1.dll"
-  File "GNU2\cygz.dll"
+  File /r "GNU2\license_gpl_pdftk"
+  File "GNU2\libiconv2.dll"
   File "GNU2\pdftk.exe"
 
   File "bin\release\${APP}.exe"
@@ -200,11 +198,14 @@ Section "Uninstall"
   Delete "$INSTDIR\pdftoppm.exe"
   Delete "$INSTDIR\zlib1.dll"
 
+  RMDir /r "$INSTDIR\license_gpl_pdftk"
+
   Delete "$INSTDIR\cyggcc_s-1.dll"
   Delete "$INSTDIR\cygiconv-2.dll"
   Delete "$INSTDIR\cygwin1.dll"
   Delete "$INSTDIR\cygz.dll"
   Delete "$INSTDIR\pdftk.exe"
+  Delete "$INSTDIR\libiconv2.dll"
 
   Delete "$INSTDIR\1.ico"
   Delete "$INSTDIR\${APP}.exe"
