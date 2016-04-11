@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HIRAOKA HYPERS TOOLS, Inc.")]
 [assembly: AssemblyProduct("your PDF Editor")]
-[assembly: AssemblyCopyright("Copyright (C) 2011,2015")]
+[assembly: AssemblyCopyright("Copyright (C) 2011,2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly:     AssemblyVersion("0.9.0.0")] // here
-[assembly: AssemblyFileVersion("0.9.0.0")] // here
+[assembly:     AssemblyVersion("0.10.0.0")] // here
+[assembly: AssemblyFileVersion("0.10.0.0")] // here

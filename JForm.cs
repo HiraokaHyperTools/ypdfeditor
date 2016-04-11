@@ -748,7 +748,7 @@ namespace yPDFEditor {
                 for (int x = 0; x < tv.Picts.Count; x++) {
                     cat += " " + (1 + x);
                     if (tv.SelFirst <= x && x <= tv.SelLast) {
-                        cat += fLeft ? "L" : "R";
+                        cat += fLeft ? "left" : "right";
                     }
                 }
 
