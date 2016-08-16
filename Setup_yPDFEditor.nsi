@@ -11,7 +11,7 @@
 !system 'DefineAsmVer.exe "bin\release\${APP}.exe" "!define VER ""[SVER]"" " > Tmpver.nsh'
 !include "Tmpver.nsh"
 
-!searchreplace APPVER "$VER" "." "_"
+!searchreplace APPVER "${VER}" "." "_"
 
 !define MIME "application/pdf"
 
