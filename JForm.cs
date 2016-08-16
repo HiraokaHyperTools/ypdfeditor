@@ -575,7 +575,12 @@ namespace yPDFEditor {
                 inppdf["A"] = fpTmppdf;
                 inppdf["B"] = fp;
                 if (new CPdftk().Cat3(fpTmp2, cat, inppdf)) {
-                    File.Delete(fpTmppdf);
+                    try {
+                        File.Delete(fpTmppdf);
+                    }
+                    catch (Exception) {
+                        //TODO 処理
+                    }
 
                     pdfexp = new PDFExploder(fpTmppdf = fpTmp2);
 

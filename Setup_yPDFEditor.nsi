@@ -8,8 +8,10 @@
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
 
-!define VER    "0.10"
-!define APPVER "0_10"
+!system 'DefineAsmVer.exe "bin\release\${APP}.exe" "!define VER ""[SVER]"" " > Tmpver.nsh'
+!include "Tmpver.nsh"
+
+!searchreplace APPVER "$VER" "." "_"
 
 !define MIME "application/pdf"
 
