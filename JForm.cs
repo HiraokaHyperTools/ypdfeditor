@@ -171,10 +171,6 @@ namespace yPDFEditor {
             internal static string Quotes(String fp) { return "\"" + fp + "\""; }
         }
 
-        class CygNUt {
-            internal static string Quotes(String fp) { return "\"" + fp.Replace("\\", "\\\\") + "\""; }
-        }
-
         PDFExploder pdfexp = null;
 
         void Openf(String fp) {
@@ -297,7 +293,7 @@ namespace yPDFEditor {
 
         public byte[] GetPDF(int x) {
             using (MemoryStream os = new MemoryStream()) {
-                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " " + CygNUt.Quotes(fpTmppdf) + " cat " + (1 + x) + " output -");
+                ProcessStartInfo psi = new ProcessStartInfo(pdftk_exe, " " + WinNUt.Quotes(fpTmppdf) + " cat " + (1 + x) + " output -");
                 psi.CreateNoWindow = true;
                 psi.UseShellExecute = false;
                 psi.RedirectStandardOutput = true;
@@ -1021,9 +1017,9 @@ namespace yPDFEditor {
             internal bool Cat(String fpTmp2, params String[] alfpIn) {
                 String a = "";
                 foreach (String fpIn in alfpIn) {
-                    a += " " + (PVUt.PGExists(fpIn) ? CygNUt.Quotes(fpIn) : "");
+                    a += " " + (PVUt.PGExists(fpIn) ? WinNUt.Quotes(fpIn) : "");
                 }
-                a += " cat output " + CygNUt.Quotes(fpTmp2);
+                a += " cat output " + WinNUt.Quotes(fpTmp2);
 
                 psi = new ProcessStartInfo(pdftk_exe, a);
                 psi.CreateNoWindow = true;
@@ -1041,7 +1037,7 @@ namespace yPDFEditor {
             }
 
             internal bool Cat2(String fpTmp2, String cat, String fpTmppdf) {
-                String a = " " + CygNUt.Quotes(fpTmppdf) + " cat " + cat + " output " + CygNUt.Quotes(fpTmp2) + "";
+                String a = " " + WinNUt.Quotes(fpTmppdf) + " cat " + cat + " output " + WinNUt.Quotes(fpTmp2) + "";
 
                 psi = new ProcessStartInfo(pdftk_exe, a);
                 psi.CreateNoWindow = true;
@@ -1061,9 +1057,9 @@ namespace yPDFEditor {
             internal bool Cat3(String fpTmp2, String cat, IDictionary<String, String> inppdf) {
                 String a = "";
                 foreach (KeyValuePair<String, String> kv in inppdf) {
-                    a += " " + kv.Key + "=" + CygNUt.Quotes(kv.Value);
+                    a += " " + kv.Key + "=" + WinNUt.Quotes(kv.Value);
                 }
-                a += " cat " + cat + " output " + CygNUt.Quotes(fpTmp2) + "";
+                a += " cat " + cat + " output " + WinNUt.Quotes(fpTmp2) + "";
 
                 psi = new ProcessStartInfo(pdftk_exe, a);
                 psi.CreateNoWindow = true;
