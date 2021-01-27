@@ -6,21 +6,27 @@ using System.Data;
 using System.Text;
 using System.Windows.Forms;
 
-namespace yPDFEditor {
-    public partial class WIP2 : UserControl {
-        public WIP2() {
+namespace yPDFEditor
+{
+    public partial class WIP2 : UserControl
+    {
+        public WIP2()
+        {
             InitializeComponent();
         }
 
-        private void WIP2_Load(object sender, EventArgs e) {
+        private void WIP2_Load(object sender, EventArgs e)
+        {
 
         }
     }
 
-    public class WIPPanel : IDisposable {
+    public class WIPPanel : IDisposable
+    {
         WIP2 wip;
 
-        public WIPPanel(Control parent) {
+        public WIPPanel(Control parent)
+        {
             wip = new WIP2();
             wip.Parent = parent;
             wip.Left = (parent.Width - wip.Width) / 2;
@@ -32,7 +38,8 @@ namespace yPDFEditor {
 
         #region IDisposable ÉÅÉìÉo
 
-        public void Dispose() {
+        public void Dispose()
+        {
             if (wip != null)
                 wip.Dispose();
         }

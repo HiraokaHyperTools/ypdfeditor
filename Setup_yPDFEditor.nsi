@@ -1,15 +1,20 @@
-; example1.nsi
+Ôªø; example1.nsi
 ;
 ; This script is perhaps one of the simplest NSIs you can make. All of the
 ; optional settings are left to their default settings. The installer simply 
 ; prompts the user asking them where to install, and drops a copy of example1.nsi
 ; there. 
 
+Unicode true
+
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
 
-!system 'DefineAsmVer.exe "bin\release\${APP}.exe" "!define VER ""[SVER]"" " > Tmpver.nsh'
-!include "Tmpver.nsh"
+!system 'MySign "bin\Release\${APP}.exe"'
+!finalize 'MySign "%1"'
+
+!system 'DefineAsmVer.exe "bin\Release\${APP}.exe" "!define VER ""[RAWFV]"" " > Appver.tmp'
+!include "Appver.tmp"
 
 !searchreplace APPVER "${VER}" "." "_"
 
@@ -17,13 +22,15 @@
 
 !define EXT ".pdf"
 
-; bin\release
+; bin\Release
 ; Release/Any CPU
+
+XPStyle on
 
 ;--------------------------------
 
 ; The name of the installer
-Name "${TITLE} -- ${VER}"
+Name "${TITLE} ${VER}"
 
 ; The file to write
 OutFile "Setup_${APP}_${APPVER}_user.exe"
@@ -44,9 +51,6 @@ AllowSkipFiles off
 
 SetOverwrite ifdiff
 
-!define DOTNET_VERSION "2.0"
-
-!include "DotNET.nsh"
 !include LogicLib.nsh
 
 ;--------------------------------
@@ -55,7 +59,7 @@ SetOverwrite ifdiff
 
 Page license
 PageEx license
-  LicenseText "ïœçXóöó"
+  LicenseText "Â§âÊõ¥Â±•Ê≠¥"
   LicenseData CHANGES.rtf
 PageExEnd
 Page directory
@@ -101,28 +105,21 @@ Section "${APP}" ;No components page, name is not important
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
 
-  !insertmacro CheckDotNET ${DOTNET_VERSION}
-
   ; Put file there
-  File "GNU\pdfinfo.exe"
-  File "GNU\pdftoppm.exe"
-
-  File /r "GNU2\license_gpl_pdftk"
-  File "GNU2\libiconv2.dll"
-  File "GNU2\pdftk.exe"
-
-  File "bin\release\${APP}.exe"
-  File "bin\release\${APP}.pdb"
+  File /r /x "*.vshost.*" "bin\Release\*.*"
   File ".\MAPISendMailSa.exe"
   File "1.ico"
 
-  SetOutPath "$INSTDIR\share\poppler"
-  File /r /x ".svn" "poppler-data\*.*"
+  SetOutPath "$INSTDIR\GPL"
+  File /r "GPL\*.*"
+
+  SetOutPath "$INSTDIR\GPL\share\poppler"
+  File /r /x ".svn" /x ".git" "poppler-data\*.*"
 
   SetOutPath $INSTDIR
 
   WriteRegStr HKCU "Software\Classes\${APP}" "" "${TITLE}"
-  WriteRegstr HKCU "Software\Classes\${APP}\DefaultIcon" "" "$INSTDIR\1.ico,0"
+  WriteRegStr HKCU "Software\Classes\${APP}\DefaultIcon" "" "$INSTDIR\1.ico,0"
   WriteRegStr HKCU "Software\Classes\${APP}\shell\open\command" "" '"$INSTDIR\${APP}.exe" "%1"'
 
   WriteRegStr HKCU "Software\HIRAOKA HYPERS TOOLS, Inc.\${APP}" "Install_Dir" "$INSTDIR"
@@ -136,7 +133,7 @@ Section "${APP}" ;No components page, name is not important
   
 SectionEnd ; end the section
 
-Section /o "PDFÇ÷ã≠Ç≠ä÷òAïtÇØ"
+Section /o "PDF„Å∏Âº∑„ÅèÈñ¢ÈÄ£‰ªò„Åë"
   WriteRegStr HKCU "Software\Classes\${EXT}" "" "${APP}"
   WriteRegStr HKCU "Software\Classes\${EXT}" "Content Type" "${MIME}"
 SectionEnd
@@ -150,17 +147,17 @@ Section ""
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${EXT}" "Progid"
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${EXT}" "Application"
 
-  DetailPrint "ä÷òAïtÇØçXêVíÜÇ≈Ç∑ÅBÇ®ë“ÇøÇ≠ÇæÇ≥Ç¢ÅB"
+  DetailPrint "Èñ¢ÈÄ£‰ªò„ÅëÊõ¥Êñ∞‰∏≠„Åß„Åô„ÄÇ„ÅäÂæÖ„Å°„Åè„Å†„Åï„ÅÑ„ÄÇ"
   !insertmacro UPDATEFILEASSOC
 SectionEnd
 
-Section "ÉXÉ^Å[ÉgÉÅÉjÉÖÅ[Ç÷ìoò^"
+Section "„Çπ„Çø„Éº„Éà„É°„Éã„É•„Éº„Å∏ÁôªÈå≤"
   CreateDirectory "$SMPROGRAMS\${TITLE}"
   CreateShortCut "$SMPROGRAMS\${TITLE}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\${TITLE}\ãNìÆ.lnk" "$INSTDIR\${APP}.exe" "" "$INSTDIR\${APP}.exe" 0
+  CreateShortCut "$SMPROGRAMS\${TITLE}\Ëµ∑Âãï.lnk" "$INSTDIR\${APP}.exe" "" "$INSTDIR\${APP}.exe" 0
 SectionEnd
 
-Section "ãNìÆ"
+Section "Ëµ∑Âãï"
   SetOutPath $INSTDIR
   Exec "$INSTDIR\${APP}.exe"
 SectionEnd
@@ -217,14 +214,16 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\share\poppler"
   RMDir    "$INSTDIR\share"
 
-  DetailPrint "ä÷òAïtÇØçXêVíÜÇ≈Ç∑ÅBÇ®ë“ÇøÇ≠ÇæÇ≥Ç¢ÅB"
+  RMDir /r "$INSTDIR\GPL"
+
+  DetailPrint "Èñ¢ÈÄ£‰ªò„ÅëÊõ¥Êñ∞‰∏≠„Åß„Åô„ÄÇ„ÅäÂæÖ„Å°„Åè„Å†„Åï„ÅÑ„ÄÇ"
   !insertmacro UPDATEFILEASSOC
 
   Delete "$INSTDIR\uninstall.exe"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\${TITLE}\Uninstall.lnk"
-  Delete "$SMPROGRAMS\${TITLE}\ãNìÆ.lnk"
+  Delete "$SMPROGRAMS\${TITLE}\Ëµ∑Âãï.lnk"
 
   ; Remove directories used
   RMDir "$SMPROGRAMS\${TITLE}"

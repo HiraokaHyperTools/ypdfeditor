@@ -1,4 +1,4 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -18,6 +18,13 @@
     <RootNamespace>yPDFEditor</RootNamespace>
     <AssemblyName>yPDFEditor</AssemblyName>
     <ApplicationIcon>1.ico</ApplicationIcon>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -62,7 +69,14 @@
     <Compile Include="AboutForm.Designer.cs">
       <DependentUpon>AboutForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="FitRect3.cs" />
+    <Compile Include="Delegates\Delegates.cs" />
+    <Compile Include="Enums\SizeSpec.cs" />
+    <Compile Include="Enums\TvHitTestInfo.cs" />
+    <Compile Include="Enums\TvHitTestLocation.cs" />
+    <Compile Include="Enums\TvInsertMarkLocation.cs" />
+    <Compile Include="Exceptions\PageExtractException.cs" />
+    <Compile Include="Utils\FitCnf.cs" />
+    <Compile Include="Utils\FitRect3.cs" />
     <Compile Include="JForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -127,6 +141,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="App.config" />
+    <None Include="GPL\license_gpl_pdftk.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -142,6 +160,19 @@
     <Compile Include="ThumbView.Designer.cs">
       <DependentUpon>ThumbView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Utils\CPdftk.cs" />
+    <Compile Include="Utils\HIDGen.cs" />
+    <Compile Include="Utils\PagePic.cs" />
+    <Compile Include="Utils\PDFClip.cs" />
+    <Compile Include="Utils\PDFExploder.cs" />
+    <Compile Include="Utils\PDFInfo.cs" />
+    <Compile Include="Utils\PVUt.cs" />
+    <Compile Include="Utils\ThumbGen.cs" />
+    <Compile Include="Utils\TvInsertMark.cs" />
+    <Compile Include="Utils\TvPict.cs" />
+    <Compile Include="Utils\UtMarkTemp.cs" />
+    <Compile Include="Utils\UtRedir.cs" />
+    <Compile Include="Utils\WinNUt.cs" />
     <Compile Include="WIP2.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -166,13 +197,18 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="1.ico" />
-    <Content Include="GNU2\cyggcc_s-1.dll" />
-    <Content Include="GNU2\cygiconv-2.dll" />
-    <Content Include="GNU2\cygwin1.dll" />
-    <Content Include="GNU2\cygz.dll" />
-    <Content Include="GNU2\pdftk.exe" />
-    <Content Include="GNU\pdfinfo.exe" />
-    <Content Include="GNU\pdftoppm.exe" />
+    <None Include="GPL\pdftk.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="GPL\pdfinfo.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="GPL\pdftoppm.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="GPL\libiconv2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Content Include="MAPISendMailSa.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -1,6 +1,8 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+[assembly: AssemblyInformationalVersion("0.13")] // here
 
 // アセンブリに関する一般情報は以下の属性セットをとおして制御されます。 
 // アセンブリに関連付けられている情報を変更するには、
@@ -10,7 +12,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HIRAOKA HYPERS TOOLS, Inc.")]
 [assembly: AssemblyProduct("your PDF Editor")]
-[assembly: AssemblyCopyright("Copyright (C) 2011,2016")]
+[assembly: AssemblyCopyright("Copyright (C) 2011, 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,5 +31,6 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly:     AssemblyVersion("0.12.0.0")] // here
-[assembly: AssemblyFileVersion("0.12.0.0")] // here
+[assembly: AssemblyVersion("0.13.0.0")]
+
+[assembly: InternalsVisibleTo("Unittest")]
