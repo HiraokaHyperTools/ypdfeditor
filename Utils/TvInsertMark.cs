@@ -8,23 +8,20 @@ namespace yPDFEditor.Utils
 {
     public struct TvInsertMark : IComparable<TvInsertMark>
     {
-        int i;
-        TvInsertMarkLocation loc;
-
-        public TvInsertMark(int i)
+        public TvInsertMark(int index)
         {
-            this.i = i;
-            this.loc = TvInsertMarkLocation.None;
+            Index = index;
+            Location = TvInsertMarkLocation.None;
         }
 
-        public TvInsertMark(int i, TvInsertMarkLocation loc)
+        public TvInsertMark(int index, TvInsertMarkLocation location)
         {
-            this.i = i;
-            this.loc = loc;
+            Index = index;
+            Location = location;
         }
 
-        public int Item { get { return i; } }
-        public TvInsertMarkLocation Location { get { return loc; } }
+        public int Index { get; private set; }
+        public TvInsertMarkLocation Location { get; private set; }
 
         public override bool Equals(object obj) { return (obj is TvInsertMark) ? CompareTo((TvInsertMark)obj) == 0 : base.Equals(obj); }
         public override int GetHashCode() { return base.GetHashCode(); }
@@ -37,8 +34,8 @@ namespace yPDFEditor.Utils
         public int CompareTo(TvInsertMark other)
         {
             int t;
-            t = i.CompareTo(other.i); if (t != 0) return t;
-            t = loc.CompareTo(other.loc); if (t != 0) return t;
+            t = Index.CompareTo(other.Index); if (t != 0) return t;
+            t = Location.CompareTo(other.Location); if (t != 0) return t;
             return 0;
         }
 
@@ -46,7 +43,7 @@ namespace yPDFEditor.Utils
 
         public override string ToString()
         {
-            return string.Format("Item={0}, Location={1}", i, loc);
+            return string.Format("Index={0}, Location={1}", Index, Location);
         }
     }
 }

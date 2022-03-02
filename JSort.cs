@@ -23,9 +23,8 @@ namespace yPDFEditor
 
         public int[] Indices = new int[0];
 
-        public void Set(BindingList<TvPict> picts)
+        public void Set(int cx)
         {
-            int cx = picts.Count;
             {
                 int PW = 45;
                 int PH = 60;

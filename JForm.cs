@@ -11,21 +11,32 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using yPDFEditor.Utils;
-using yPDFEditor.Exceptions;
 using yPDFEditor.Enums;
+using PdfiumViewer;
+using System.Linq;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace yPDFEditor
 {
     public partial class JForm : Form
     {
-        String fp = null;
-        String fpCurrent = null;
+        private string fp = null;
+        private string fpCurrent = null;
+        private PdfDocument pdfDoc = null;
+        private MemoryStream pdfMem = new MemoryStream();
 
-        public JForm(String fp)
+        public JForm(string file)
         {
             InitializeComponent();
 
-            this.fp = fp;
+            this.fp = file;
+
+            tv.ThumbSetProvider = (pageIndex) =>
+            {
+                return LoadPreviewOf(pageIndex);
+            };
+            preViewer.ThumbSetProvider = () => LoadPict();
         }
 
         bool isModified = false;
@@ -79,8 +90,8 @@ namespace yPDFEditor
                 case TState.No:
                     tv.Picts.Clear();
                     Currentfp = null;
-                    fpTmppdf = Path.GetTempFileName();
-                    UtMarkTemp.Add(fpTmppdf);
+                    pdfDoc?.Dispose();
+                    pdfDoc = null;
                     Modified = false;
                     break;
             }
@@ -124,8 +135,10 @@ namespace yPDFEditor
 
         private void JForm_Load(object sender, EventArgs e)
         {
-            tv.Picts = new BindingList<TvPict>();
-            tv.Picts.ListChanged += new ListChangedEventHandler(Picts_ListChanged);
+            tv.Picts = new ObservableCollection<ThumbSet>();
+            tv.Picts.CollectionChanged += Picts_CollectionChanged;
+
+            this.Text += " " + Application.ProductVersion;
 
             TitleTemp = this.Text;
 
@@ -140,9 +153,38 @@ namespace yPDFEditor
             tscRate.SelectedIndex = 0;
         }
 
-        void Picts_ListChanged(object sender, ListChangedEventArgs e)
+        private void Picts_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            Modified = true;
+            var index = tv.SelectFrom;
+            var redraw = false;
+
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                case NotifyCollectionChangedAction.Replace:
+                    if ((uint)(index - e.NewStartingIndex) < e.NewItems.Count)
+                    {
+                        redraw = true;
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Remove:
+                    if ((uint)(index - e.OldStartingIndex) < e.OldItems.Count)
+                    {
+                        redraw = true;
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Move:
+                case NotifyCollectionChangedAction.Reset:
+                    redraw = true;
+                    break;
+            }
+
+            if (redraw)
+            {
+                tv_SelChanged(this, EventArgs.Empty);
+            }
         }
 
         private void bOpenf_Click(object sender, EventArgs e)
@@ -161,62 +203,93 @@ namespace yPDFEditor
             }
         }
 
-        String fpTmppdf = null;
-
-        PDFExploder pdfExp = null;
-
-        void OpenFile(String fp)
+        private void OpenFile(String file)
         {
-            fpTmppdf = Path.GetTempFileName();
-            UtMarkTemp.Add(fpTmppdf);
-            File.Copy(fp, fpTmppdf, true);
+            pdfDoc?.Dispose();
+            pdfMem?.Dispose();
 
-            var pdfInfo = new PDFInfo(fpTmppdf);
-            pdfInfo.Read();
-            pdfExp = new PDFExploder(fpTmppdf);
+            using (var fs = File.OpenRead(file))
+            {
+                pdfMem = new MemoryStream();
+                fs.CopyTo(pdfMem);
+                pdfMem.Position = 0;
+            }
+
+            pdfDoc = PdfDocument.Load(pdfMem);
 
             tv.Picts.Clear();
             Currentfp = null;
-            int cnt = pdfInfo.PageCount;
+            int cnt = pdfDoc.PageCount;
             for (int i = 0; i < cnt; i++)
             {
-                tv.Picts.Add(new TvPict(pdfExp, i));
+                tv.Picts.Add(ThumbSet.Delayed);
             }
-            Currentfp = fp;
+            Currentfp = file;
             Modified = false;
+        }
+
+        private ThumbSet LoadPreviewOf(int i)
+        {
+            return new ThumbSet
+            {
+                Bitmap = GetThumbnailOf(i, 200, 280),
+                State = ThumbState.Loaded,
+            };
+        }
+
+        private ThumbSet LoadPict()
+        {
+            if (pdfDoc == null || tv.SelectionFirst == -1)
+            {
+                return null;
+            }
+
+            return new ThumbSet
+            {
+                Bitmap = GetThumbnailOf(tv.SelectionFirst, preViewer.Width, preViewer.Height),
+                State = ThumbState.Loaded,
+            };
         }
 
         private void tv_SelChanged(object sender, EventArgs e)
         {
-            int c = tv.SelCount;
-            if (c == 0)
+            var length = tv.SelectionLength;
+            if (length == 0)
             {
                 tssl.Text = "Ready";
             }
-            else if (c == 1)
+            else if (length == 1)
             {
-                tssl.Text = String.Format("ページ{0:#,##0}を選択。", 1 + tv.SelFirst);
+                tssl.Text = String.Format("ページ{0:#,##0}を選択。", 1 + tv.SelectionFirst);
             }
             else
             {
-                tssl.Text = String.Format("ページ{0:#,##0}～{1:#,##0}を選択。(ページ数{2:#,##0})", 1 + tv.SelFirst, 1 + tv.SelLast, c);
+                tssl.Text = String.Format("ページ{0:#,##0}～{1:#,##0}を選択。(ページ数{2:#,##0})", 1 + tv.SelectionFirst, 1 + tv.SelectionLast, length);
             }
 
-            if (c == 0)
+            if (length == 0)
             {
-                pvw.Pic = null;
+                preViewer.Pict = null;
             }
             else
             {
-                try
-                {
-                    pvw.Pic = tv.Picts[tv.Sel2].DefTumbGen.GetThumbnail(Size.Empty);
-                }
-                catch (PageExtractException)
-                {
-                    pvw.Pic = new Bitmap(1, 1);
-                }
+                preViewer.Pict = ThumbSet.Delayed;
             }
+        }
+
+        private Bitmap GetThumbnailOf(int pageIndex, int maxWidth, int maxHeight)
+        {
+            var pageSize = pdfDoc.PageSizes[pageIndex];
+            pageSize.Width *= 2;
+            pageSize.Height *= 2;
+            var rect = FitRect3.Fit(
+                new Rectangle(0, 0, Math.Max(16, maxWidth), Math.Max(16, maxHeight)),
+                Size.Truncate(pageSize)
+            );
+            var cx = rect.Width;
+            var cy = rect.Height;
+            var bitmap = (Bitmap)pdfDoc.Render(pageIndex, cx, cy, 96, 96, false);
+            return bitmap;
         }
 
         private void tscRate_SelectedIndexChanged(object sender, EventArgs e)
@@ -224,10 +297,10 @@ namespace yPDFEditor
             switch (tscRate.SelectedIndex)
             {
                 case 0: //"頁全体"
-                    pvw.FitCnf = new FitCnf(SizeSpec.FWH);
+                    preViewer.FitCnf = new FitCnf(SizeSpec.FWH);
                     break;
                 case 1: //"頁幅"
-                    pvw.FitCnf = new FitCnf(SizeSpec.FW);
+                    preViewer.FitCnf = new FitCnf(SizeSpec.FW);
                     break;
                 default:
                     SetRate(tscRate.Text);
@@ -241,7 +314,7 @@ namespace yPDFEditor
             int percent;
             if (match.Success && int.TryParse(match.Groups[1].Value, out percent) && 1 <= percent && percent <= 1600)
             {
-                pvw.FitCnf = new FitCnf(percent / 100.0f);
+                preViewer.FitCnf = new FitCnf(percent / 100.0f);
             }
             else
             {
@@ -268,19 +341,23 @@ namespace yPDFEditor
 
         private void bzoomIn_Click(object sender, EventArgs e)
         {
-            if (pvw.Pic != null)
-                pvw.FitCnf = new FitCnf(pvw.ActualRate * 1.3f);
+            if (preViewer.Pict != null)
+            {
+                preViewer.FitCnf = new FitCnf(preViewer.ActualRate * 1.3f);
+            }
         }
 
         private void bzoomOut_Click(object sender, EventArgs e)
         {
-            if (pvw.Pic != null)
-                pvw.FitCnf = new FitCnf(pvw.ActualRate / 1.3f);
+            if (preViewer.Pict != null)
+            {
+                preViewer.FitCnf = new FitCnf(preViewer.ActualRate / 1.3f);
+            }
         }
 
         private void preViewer1_FitCnfChanged(object sender, EventArgs e)
         {
-            FitCnf fc = pvw.FitCnf;
+            FitCnf fc = preViewer.FitCnf;
             switch (fc.SizeSpec)
             {
                 case SizeSpec.FWH:
@@ -310,34 +387,15 @@ namespace yPDFEditor
             vsc.Panel2Collapsed = !bShowPreView.Checked;
         }
 
-        public byte[] GetPDF(int x)
+        public byte[] GetPDF(int pageIdx)
         {
             using (MemoryStream os = new MemoryStream())
             {
-                ProcessStartInfo psi = new ProcessStartInfo(CPdftk.pdftk_exe, " " + WinNUt.Quotes(fpTmppdf) + " cat " + (1 + x) + " output -");
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                psi.RedirectStandardOutput = true;
-                psi.RedirectStandardError = true;
-                Process p = Process.Start(psi);
-                UtRedir ste = new UtRedir(p.StandardError);
-                Stream si = p.StandardOutput.BaseStream;
-                byte[] bin = new byte[4000];
-                while (true)
+                using (var newDoc = PdfDocument.Compose(pdfDoc, $"{1 + pageIdx}"))
                 {
-                    int r = si.Read(bin, 0, bin.Length);
-                    if (r < 1) break;
-                    os.Write(bin, 0, r);
+                    newDoc.Save(os);
                 }
-                p.WaitForExit();
-                ste.Wait();
-
-                if (p.ExitCode == 0)
-                {
-                    return os.ToArray();
-                }
-
-                throw new ApplicationException("pdftk failed (" + p.ExitCode + ")");
+                return os.ToArray();
             }
         }
 
@@ -345,9 +403,9 @@ namespace yPDFEditor
         {
             DataObject dat = new DataObject();
             PDFClip clip = new PDFClip();
-            clip.PId = Process.GetCurrentProcess().Id;
-            clip.SelFirst = tv.SelFirst;
-            clip.SelLast = tv.SelLast;
+            clip.ProcessId = Process.GetCurrentProcess().Id;
+            clip.SelectionFirst = tv.SelectionFirst;
+            clip.SelectionLast = tv.SelectionLast;
             clip.GetPDF = GetPDF;
 
             dat.SetData("PDFClip", clip);
@@ -356,52 +414,28 @@ namespace yPDFEditor
 
             if (dat.GetDataPresent("Pasted") && (int)dat.GetData("Pasted") == 1)
             {
-                int iSelLast = tv.SelLast;
-                int iSelFirst = tv.SelFirst;
+                int iSelLast = tv.SelectionLast;
+                int iSelFirst = tv.SelectionFirst;
 
                 EditDeletePages(iSelFirst, iSelLast);
             }
         }
 
-        private void EditDeletePages(int iSelFirst, int iSelLast)
+        private void EditDeletePages(int firstIdx, int lastIdx)
         {
+            for (int x = firstIdx; x <= lastIdx; x++)
             {
-                String fpTmp2 = Path.GetTempFileName();
-                UtMarkTemp.Add(fpTmp2);
-
-                String cat = "";
-                for (int x = 0; x < tv.Picts.Count; x++)
-                {
-                    if (tv.SelFirst <= x && x <= tv.SelLast)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        cat += " " + (1 + x);
-                    }
-                }
-
-
-                if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf))
-                {
-                    MessageBox.Show(this, "削除に失敗しました。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                File.Delete(fpTmppdf);
-
-                pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
+                pdfDoc.DeletePage(firstIdx);
+                tv.Picts.RemoveAt(firstIdx);
             }
 
-            int cx = tv.SelCount;
-            for (int x = tv.SelLast; cx > 0; x--, cx--)
+            if (tv.Picts.Any() || Currentfp != null)
             {
-                tv.Picts.RemoveAt(x);
+                Modified = true;
             }
-            for (int x = 0; x < tv.Picts.Count; x++)
+            else
             {
-                tv.Picts[x].Relocate(pdfExp, x);
+                Modified = false;
             }
         }
 
@@ -464,7 +498,7 @@ namespace yPDFEditor
             TvInsertMark iMark = tv.InsertMark;
             try
             {
-                int iAt = iMark.Item + ((0 != (iMark.Location & (TvInsertMarkLocation.Right | TvInsertMarkLocation.Bottom))) ? 1 : 0);
+                int iAt = iMark.Index + ((0 != (iMark.Location & (TvInsertMarkLocation.Right | TvInsertMarkLocation.Bottom))) ? 1 : 0);
 
                 DropIt(e, iAt);
             }
@@ -474,24 +508,32 @@ namespace yPDFEditor
             }
         }
 
-        private void DropIt(DragEventArgs e, int iAt)
+        private void DropIt(DragEventArgs e, int destIdx)
         {
             bool isCopy = 0 != (e.Effect & DragDropEffects.Copy);
 
-            String[] alfp = e.Data.GetData(DataFormats.FileDrop) as String[];
-            if (alfp != null)
+            var fileList = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (fileList != null)
             {
                 DialogResult res;
                 if (Currentfp == null)
+                {
                     res = DialogResult.OK;
-                else if (iAt >= 0)
+                }
+                else if (destIdx >= 0)
+                {
                     res = DialogResult.Yes;
+                }
                 else
+                {
                     using (OpenWayForm form = new OpenWayForm(true))
+                    {
                         res = form.ShowDialog();
+                    }
+                }
                 if (res == DialogResult.OK)
                 {
-                    foreach (String fp in alfp)
+                    foreach (String fp in fileList)
                     {
                         OpenFile(fp);
                         break;
@@ -499,98 +541,89 @@ namespace yPDFEditor
                 }
                 else if (res != DialogResult.Cancel)
                 {
-                    bool fAppend = res == DialogResult.Retry;
-                    bool fInsertAfter = res == DialogResult.Yes;
+                    bool ifInsertAfter = res == DialogResult.Yes;
 
-                    if (!fInsertAfter)
+                    if (!ifInsertAfter)
                     {
-                        iAt = tv.Picts.Count;
+                        destIdx = tv.Picts.Count;
                     }
 
                     using (WIPPanel wipp = new WIPPanel(tv))
-                        foreach (String fp in alfp)
+                    {
+                        foreach (String file in fileList)
                         {
-                            EditAppendPDF(fp, iAt);
+                            EditInsertPDF(file, destIdx);
                         }
+                    }
                 }
                 return;
             }
             else
             {
                 PDFClip clip = (PDFClip)e.Data.GetData("PDFClip");
-                int iPId = clip.PId;
-                int iSelFirst = clip.SelFirst;
-                int iSelLast = clip.SelLast;
+                int processId = clip.ProcessId;
+                int lastSel = clip.SelectionFirst;
+                int firstSel = clip.SelectionLast;
 
-                int cnt = iSelLast - iSelFirst + 1;
+                int cnt = firstSel - lastSel + 1;
 
-                if (iPId == Process.GetCurrentProcess().Id)
+                if (processId == Process.GetCurrentProcess().Id)
                 {
-                    List<TvPict> al = new List<TvPict>();
-                    for (int x = iSelFirst; x <= iSelLast; x++) al.Add(tv.Picts[x]);
+                    var list = new List<ThumbSet>();
+                    for (int x = lastSel; x <= firstSel; x++)
+                    {
+                        list.Add(tv.Picts[x]);
+                    }
 
                     if (isCopy)
                     {
                         using (WIPPanel wipp = new WIPPanel(tv))
-                            EditCopyPages(iAt, iSelFirst, iSelLast);
+                        {
+                            EditCopyPages(destIdx, lastSel, firstSel);
+                        }
                     }
                     else
                     {
-                        if (iSelFirst <= iAt && iAt <= iSelLast + 1)
+                        if (lastSel <= destIdx && destIdx <= firstSel + 1)
                         {
-
+                            // out of range
                         }
                         else
                         {
                             using (WIPPanel wipp = new WIPPanel(tv))
-                                EditMovePages(iAt, iSelFirst, iSelLast);
+                            {
+                                EditMovePages(destIdx, lastSel, firstSel);
+                            }
                         }
                     }
                 }
                 else
                 {
-                    String fpTmp2 = Path.GetTempFileName();
-                    UtMarkTemp.Add(fpTmp2);
-
-                    String cat = "";
-                    int num = 2;
-                    IDictionary<String, String> inppdf = new SortedDictionary<String, String>();
                     for (int x = 0; x <= tv.Picts.Count; x++)
                     {
-                        if (iAt == x)
+                        if (destIdx == x)
                         {
                             for (int t = 0; t < cnt; t++)
                             {
-                                byte[] bin = clip.GetPDF(iSelFirst + t);
-                                String fpxTmp = Path.GetTempFileName();
-                                UtMarkTemp.Add(fpxTmp);
-                                File.WriteAllBytes(fpxTmp, bin);
-                                inppdf[HIDGen.Generate(num)] = fpxTmp;
-                                cat += " " + HIDGen.Generate(num);
-                                num++;
+                                byte[] bin = clip.GetPDF(lastSel + t);
+
+                                using (var pdfIn = PdfDocument.Load(new MemoryStream(bin, false)))
+                                {
+                                    MakesureDoc();
+                                    pdfDoc.ImportPages(pdfIn, null, x + t);
+                                    Modified = true;
+                                }
                             }
-                        }
-                        if (x < tv.Picts.Count)
-                        {
-                            cat += " A" + (1 + x);
                         }
                     }
 
-                    inppdf["A"] = fpTmppdf;
-                    if (new CPdftk().Cat3(fpTmp2, cat, inppdf))
                     {
-                        File.Delete(fpTmppdf);
-
-                        pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
                         using (WIPPanel wipp = new WIPPanel(tv))
+                        {
                             for (int x = 0; x < cnt; x++)
                             {
-                                tv.Picts.Insert(iAt + x, new TvPict(pdfExp, x));
+                                tv.Picts.Insert(destIdx + x, ThumbSet.Delayed);
                             }
-                        for (int i = 0; i < tv.Picts.Count; i++)
-                        {
-                            tv.Picts[i].Relocate(pdfExp, i);
                         }
                     }
 
@@ -602,205 +635,111 @@ namespace yPDFEditor
             }
         }
 
-        private void EditAppendPDF(string fp, int iAt)
+        private void EditInsertPDF(string file, int destIdx)
         {
-            PDFInfo pdfi = new PDFInfo(fp);
-            if (pdfi.Read())
+            using (var pdfIn = PdfDocument.Load(file))
             {
-                int cnt = pdfi.PageCount;
+                var numInPages = pdfIn.PageCount;
+                MakesureDoc();
+                pdfDoc.ImportPages(pdfIn, null, numInPages);
 
-                String fpTmp2 = Path.GetTempFileName();
-                UtMarkTemp.Add(fpTmp2);
+                Modified = true;
 
-                String cat = "";
-                for (int x = 0; x <= tv.Picts.Count; x++)
+                for (int i = 0; i < numInPages; i++, destIdx++)
                 {
-                    if (iAt == x)
-                    {
-                        for (int y = 0; y < cnt; y++)
-                        {
-                            cat += " B" + (1 + y);
-                        }
-                    }
-                    if (x < tv.Picts.Count)
-                    {
-                        cat += " A" + (1 + x);
-                    }
-                }
-
-                IDictionary<String, String> inppdf = new SortedDictionary<String, String>();
-                inppdf["A"] = fpTmppdf;
-                inppdf["B"] = fp;
-                if (new CPdftk().Cat3(fpTmp2, cat, inppdf))
-                {
-                    try
-                    {
-                        File.Delete(fpTmppdf);
-                    }
-                    catch (Exception)
-                    {
-                        //TODO 処理
-                    }
-
-                    pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
-                    for (int i = 0; i < cnt; i++)
-                    {
-                        tv.Picts.Insert(iAt, new TvPict(pdfExp, tv.Picts.Count));
-                        iAt++;
-                    }
-                    for (int i = 0; i < tv.Picts.Count; i++)
-                    {
-                        tv.Picts[i].Relocate(pdfExp, i);
-                    }
+                    tv.Picts.Insert(destIdx, ThumbSet.Delayed);
                 }
             }
         }
 
-        private void EditMovePages(int iAt, int iSelFirst, int iSelLast)
+        private void EditMovePages(int destIdx, int firstIdx, int lastIdx)
         {
-            String fpTmp2 = Path.GetTempFileName();
-            UtMarkTemp.Add(fpTmp2);
-
-            String cat = "";
-            for (int x = 0; x <= tv.Picts.Count; x++)
+            var numPages = tv.Picts.Count;
+            var pageNums = new List<int>();
+            for (int x = 0; x <= numPages; x++)
             {
-                if (iAt == x)
+                if (destIdx == x)
                 {
-                    for (int y = iSelFirst; y <= iSelLast; y++)
+                    for (int y = firstIdx; y <= lastIdx; y++)
                     {
-                        cat += " " + (1 + y);
+                        pageNums.Add(1 + y);
                     }
                 }
-                if (x < tv.Picts.Count && (x < iSelFirst || iSelLast < x))
+                if (x < tv.Picts.Count && (x < firstIdx || lastIdx < x))
                 {
-                    cat += " " + (1 + x);
+                    pageNums.Add(1 + x);
                 }
             }
 
-            if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf))
-            {
-                return;
-            }
-
-            Debug.Assert(File.Exists(fpTmppdf));
-
-            File.Delete(fpTmppdf);
-
-            pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
-            int cnt = iSelLast - iSelFirst + 1;
-
-            List<TvPict> al = new List<TvPict>();
-            for (int x = iSelFirst; x <= iSelLast; x++) al.Add(tv.Picts[x]);
-
-            for (int x = iSelLast; x >= iSelFirst; x--)
-            {
-                tv.Picts.RemoveAt(x);
-            }
-            if (iAt > iSelFirst)
-                iAt -= cnt;
-            for (int x = 0; x < al.Count; x++)
-            {
-                tv.Picts.Insert(iAt + x, al[x]);
-            }
-            for (int x = 0; x < tv.Picts.Count; x++)
-            {
-                tv.Picts[x].Relocate(pdfExp, x);
-            }
+            EditSetPages(pageNums.ToArray());
         }
 
         private void EditSetPages(int[] indices)
         {
-            String fpTmp2 = Path.GetTempFileName();
-            UtMarkTemp.Add(fpTmp2);
+            var numPages = pdfDoc.PageCount;
 
-            List<int> left = new List<int>();
-            List<int> newi = new List<int>();
-            for (int x = 0; x < tv.Picts.Count; x++)
+            pdfDoc.CopyPages(
+                string.Join(
+                    ",",
+                    indices
+                        .Select(it => it.ToString())
+                ),
+                numPages
+            );
+
+            for (int x = 0; x < numPages; x++)
             {
-                int pi = Array.IndexOf<int>(indices, 1 + x);
-                if (pi >= 0)
+                pdfDoc.DeletePage(0);
+            }
+
+            var array = new ThumbSet[indices.Length];
+
+            for (int x = 0; x < indices.Length; x++)
+            {
+                array[x] = tv.Picts[indices[x] - 1];
+            }
+
+            {
+                int x;
+                for (x = 0; x < array.Length; x++)
                 {
-                    newi.Add(1 + pi);
+                    if (x < tv.Picts.Count)
+                    {
+                        tv.Picts[x] = array[x];
+                    }
+                    else
+                    {
+                        tv.Picts.Add(array[x]);
+                    }
                 }
-                else
+                for (; x < tv.Picts.Count; x++)
                 {
-                    left.Add(1 + x);
+                    tv.Picts.RemoveAt(tv.Picts.Count - 1);
                 }
             }
 
-            String cat = "";
-            for (int x = 0; x < newi.Count; x++)
-            {
-                cat += " " + newi[x];
-            }
-
-            if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf))
-            {
-                return;
-            }
-
-            Debug.Assert(File.Exists(fpTmppdf));
-
-            File.Delete(fpTmppdf);
-
-            pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
-            List<TvPict> al = new List<TvPict>(tv.Picts);
-
-            tv.Picts.Clear();
-
-            foreach (int i in newi) tv.Picts.Add(al[i - 1]);
-            foreach (int i in left) tv.Picts.Add(al[i - 1]);
-
-            for (int x = 0; x < tv.Picts.Count; x++)
-            {
-                tv.Picts[x].Relocate(pdfExp, x);
-            }
+            Modified = true;
         }
 
-        private void EditCopyPages(int iAt, int iSelFirst, int iSelLast)
+        private void EditCopyPages(int destIdx, int firstIdx, int lastIdx)
         {
-            String fpTmp2 = Path.GetTempFileName();
-            UtMarkTemp.Add(fpTmp2);
-
-            String cat = "";
+            var pageNums = new List<int>();
             for (int x = 0; x <= tv.Picts.Count; x++)
             {
-                if (iAt == x)
+                if (destIdx == x)
                 {
-                    for (int y = iSelFirst; y <= iSelLast; y++)
+                    for (int y = firstIdx; y <= lastIdx; y++)
                     {
-                        cat += " " + (1 + y);
+                        pageNums.Add(1 + y);
                     }
                 }
                 if (x < tv.Picts.Count)
                 {
-                    cat += " " + (1 + x);
+                    pageNums.Add(1 + x);
                 }
             }
 
-            if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf))
-            {
-                return;
-            }
-
-            File.Delete(fpTmppdf);
-
-            pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
-            List<TvPict> al = new List<TvPict>();
-            for (int x = iSelFirst; x <= iSelLast; x++) al.Add(tv.Picts[x]);
-
-            for (int x = 0; x < al.Count; x++)
-            {
-                tv.Picts.Insert(iAt + x, al[x].Clone());
-            }
-            for (int x = 0; x < tv.Picts.Count; x++)
-            {
-                tv.Picts[x].Relocate(pdfExp, x);
-            }
+            EditSetPages(pageNums.ToArray());
         }
 
         private void tv_DragLeave(object sender, EventArgs e)
@@ -808,66 +747,46 @@ namespace yPDFEditor
             tv.InsertMark = new TvInsertMark();
         }
 
-        private void tv_MouseMove(object sender, MouseEventArgs e)
-        {
-        }
-
         private void bDelp_Click(object sender, EventArgs e)
         {
-            if (tv.SelCount == 0)
+            if (tv.SelectionLength == 0)
             {
                 MessageBox.Show(this, "削除できるページがありません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
             if (MessageBox.Show(this, "選択したページを削除します。", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation) != DialogResult.Yes)
+            {
                 return;
+            }
 
-            EditDeletePages(tv.SelFirst, tv.SelLast);
+            EditDeletePages(tv.SelectionFirst, tv.SelectionLast);
         }
 
         private void bRotLeft_Click(object sender, EventArgs e)
         {
-            if (tv.SelCount == 0)
+            if (tv.SelectionLength == 0)
             {
                 MessageBox.Show(this, "回転できるページがありません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
 
-            bool fLeft = Object.ReferenceEquals(sender, bRotLeft);
+            var rotateLeft = Object.ReferenceEquals(sender, bRotLeft);
 
             {
-                String fpTmp2 = Path.GetTempFileName();
-                UtMarkTemp.Add(fpTmp2);
-
-                String cat = "";
                 for (int x = 0; x < tv.Picts.Count; x++)
                 {
-                    cat += " " + (1 + x);
-                    if (tv.SelFirst <= x && x <= tv.SelLast)
+                    if (tv.SelectionFirst <= x && x <= tv.SelectionLast)
                     {
-                        cat += fLeft ? "left" : "right";
+                        pdfDoc.RotatePage(
+                            x,
+                            (PdfRotation)(((int)pdfDoc.GetPageRotation(x) + (rotateLeft ? -1 : 1)) & 3)
+                        );
+
+                        tv.Picts[x] = ThumbSet.Delayed;
+
+                        Modified = true;
                     }
                 }
-
-                if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf))
-                {
-                    MessageBox.Show(this, "回転に失敗しました。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                File.Delete(fpTmppdf);
-
-                pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-            }
-
-            for (int x = 0; x < tv.Picts.Count; x++)
-            {
-                tv.Picts[x].Relocate(pdfExp, x);
-            }
-            for (int x = tv.SelFirst; 0 <= x && x <= tv.SelLast; x++)
-            {
-                tv.Picts[x].Picture = null;
-                tv.Picts.ResetItem(x);
             }
         }
 
@@ -876,34 +795,45 @@ namespace yPDFEditor
             SaveFile(Currentfp);
         }
 
-        private void SaveFile(String fp)
+        private void SaveFile(String saveTo)
         {
             if (tv.Picts.Count == 0)
             {
                 MessageBox.Show(this, "空のPDFファイルは保存できません。\n\nページを追加してから保存してください。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
-            if (fp == null)
+            if (saveTo == null)
             {
                 sfdPict.FileName = Currentfp;
                 if (sfdPict.ShowDialog(this) != DialogResult.OK)
+                {
                     return;
-                fp = sfdPict.FileName;
+                }
+                saveTo = sfdPict.FileName;
             }
 
-            String fpbak = Path.ChangeExtension(fp, ".bak");
+            var fpbak = Path.ChangeExtension(saveTo, ".bak");
             if (File.Exists(fpbak))
+            {
                 File.Delete(fpbak);
-            if (File.Exists(fp))
-                File.Move(fp, fpbak);
+            }
+            if (File.Exists(saveTo))
+            {
+                File.Copy(saveTo, fpbak);
+            }
 
-            File.Copy(fpTmppdf, fp, true);
+            using (var pdfOut = PdfDocument.Compose(pdfDoc, null))
+            {
+                pdfOut.Save(saveTo);
+            }
 
-            Currentfp = fp;
+            Currentfp = saveTo;
             Modified = false;
 
             if (File.Exists(fpbak))
+            {
                 File.Delete(fpbak);
+            }
         }
 
         private void ss_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -926,33 +856,30 @@ namespace yPDFEditor
 
         private void bMail_Click(object sender, EventArgs e)
         {
-            if (tv.SelCount == 0)
+            if (tv.SelectionLength == 0)
             {
                 MessageBox.Show(this, "メール送信できるページがありません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
 
-            var fpTmp2 = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".pdf");
-            UtMarkTemp.Add(fpTmp2);
+            var tempPdf = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".pdf");
+            UtMarkTemp.Add(tempPdf);
 
             {
-                String cat = "";
+                var pageNums = new List<int>();
                 for (int x = 0; x < tv.Picts.Count; x++)
                 {
-                    if (tv.SelFirst <= x && x <= tv.SelLast)
+                    if (tv.SelectionFirst <= x && x <= tv.SelectionLast)
                     {
-                        cat += " " + (1 + x);
+                        pageNums.Add(1 + x);
                     }
                 }
 
-                if (!new CPdftk().Cat2(fpTmp2, cat, fpTmppdf))
-                {
-                    MessageBox.Show(this, "ページの取り出しに失敗しました。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    return;
-                }
+                var pdfOut = PdfDocument.Compose(pdfDoc, string.Join(",", pageNums));
+                pdfOut.Save(tempPdf);
             }
 
-            Process.Start(Path.Combine(Application.StartupPath, "MAPISendMailSa.exe"), " \"" + fpTmp2 + "\"");
+            Process.Start(Path.Combine(Application.StartupPath, "MAPISendMailSa.exe"), " \"" + tempPdf + "\"");
         }
 
         private void JForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -978,13 +905,13 @@ namespace yPDFEditor
 
         private void JForm_DragDrop(object sender, DragEventArgs e)
         {
-            var alfp = e.Data.GetData(DataFormats.FileDrop) as string[];
-            if (alfp != null)
+            var fileList = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (fileList != null)
             {
                 DialogResult res = DialogResult.None;
-                foreach (String fp in alfp)
+                foreach (var file in fileList)
                 {
-                    if (File.Exists(fp))
+                    if (File.Exists(file))
                     {
                         if (Currentfp == null)
                         {
@@ -1003,9 +930,10 @@ namespace yPDFEditor
 
                 if (false) { }
                 else if (res == DialogResult.OK) // Load it
+                {
                     SynchronizationContext.Current.Post(_ =>
                     {
-                        foreach (String fp in alfp)
+                        foreach (String fp in fileList)
                         {
                             if (File.Exists(fp))
                             {
@@ -1020,43 +948,37 @@ namespace yPDFEditor
                             }
                         }
                     }, null);
+                }
                 else if (res == DialogResult.Retry)// Append
+                {
                     SynchronizationContext.Current.Post(_ =>
                     {
                         using (WIPPanel wip = new WIPPanel(this))
                         {
-                            foreach (String fp in alfp)
+                            foreach (String file in fileList)
                             {
-                                if (File.Exists(fp))
+                                if (File.Exists(file))
                                 {
-                                    var pdfInfo = new PDFInfo(fp);
-                                    if (pdfInfo.Read())
+                                    using (var pdfIn = PdfDocument.Load(file))
                                     {
-                                        int numPages = pdfInfo.PageCount;
+                                        var numInPages = pdfIn.PageCount;
 
-                                        String fpTmp2 = Path.GetTempFileName();
-                                        UtMarkTemp.Add(fpTmp2);
+                                        MakesureDoc();
 
-                                        if (new CPdftk().Cat(fpTmp2, fpTmppdf, fp))
+                                        var numPages = pdfDoc.PageCount;
+
+                                        pdfDoc.ImportPages(pdfIn, null, pdfDoc.PageCount);
+
+                                        for (int i = 0; i < numInPages; i++)
                                         {
-                                            File.Delete(fpTmppdf);
-
-                                            pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
-                                            for (int i = 0; i < numPages; i++)
-                                            {
-                                                tv.Picts.Add(new TvPict(pdfExp, tv.Picts.Count));
-                                            }
-                                            for (int i = 0; i < tv.Picts.Count; i++)
-                                            {
-                                                tv.Picts[i].Relocate(pdfExp, i);
-                                            }
+                                            tv.Picts.Add(ThumbSet.Delayed);
                                         }
                                     }
                                 }
                             }
                         }
                     }, null);
+                }
             }
         }
 
@@ -1066,7 +988,7 @@ namespace yPDFEditor
             {
                 case TState.Yes:
                     {
-                        if (tv.SelCount == 0)
+                        if (tv.SelectionLength == 0)
                         {
                             MessageBox.Show(this, "メール送信できるページがありません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             return;
@@ -1108,37 +1030,37 @@ namespace yPDFEditor
             return;
         }
 
-        private void AppendFiles(string[] alfp)
+        private void AppendFiles(string[] fileList)
         {
-            foreach (String fp in alfp)
+            foreach (var file in fileList)
             {
-                if (File.Exists(fp))
+                if (File.Exists(file))
                 {
-                    var pdfInfo = new PDFInfo(fp);
-                    if (pdfInfo.Read())
+                    using (var pdfIn = PdfDocument.Load(file))
                     {
-                        int cnt = pdfInfo.PageCount;
+                        var numInPages = pdfIn.PageCount;
 
-                        String fpTmp2 = Path.GetTempFileName();
-                        UtMarkTemp.Add(fpTmp2);
+                        MakesureDoc();
+                        var numPages = pdfDoc.PageCount;
 
-                        if (new CPdftk().Cat(fpTmp2, fpTmppdf, fp))
+                        pdfDoc.ImportPages(pdfIn, null, numPages);
+
+                        for (int i = 0; i < numInPages; i++)
                         {
-                            File.Delete(fpTmppdf);
-
-                            pdfExp = new PDFExploder(fpTmppdf = fpTmp2);
-
-                            for (int i = 0; i < cnt; i++)
-                            {
-                                tv.Picts.Add(new TvPict(pdfExp, tv.Picts.Count));
-                            }
-                            for (int i = 0; i < tv.Picts.Count; i++)
-                            {
-                                tv.Picts[i].Relocate(pdfExp, i);
-                            }
+                            tv.Picts.Add(ThumbSet.Delayed);
                         }
+
+                        Modified = true;
                     }
                 }
+            }
+        }
+
+        private void MakesureDoc()
+        {
+            if (pdfDoc == null)
+            {
+                pdfDoc = PdfDocument.CreateEmpty();
             }
         }
 
@@ -1146,8 +1068,8 @@ namespace yPDFEditor
         {
             using (JSort form = new JSort())
             {
-                form.Set(tv.Picts);
-                int cx = tv.Picts.Count;
+                var cx = tv.Picts.Count;
+                form.Set(cx);
                 switch (form.ShowDialog())
                 {
                     case DialogResult.OK:
@@ -1155,6 +1077,11 @@ namespace yPDFEditor
                         break;
                 }
             }
+        }
+
+        private void preViewer_Resize(object sender, EventArgs e)
+        {
+            preViewer.Pict = ThumbSet.Delayed;
         }
     }
 }

@@ -5,5 +5,5 @@ using System.Text;
 
 namespace yPDFEditor.Delegates
 {
-    public delegate byte[] GetPDFDelegate(int i);
+    public delegate byte[] GetPDFDelegate(int pageNum);
 }

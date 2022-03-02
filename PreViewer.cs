@@ -18,46 +18,55 @@ namespace yPDFEditor
             InitializeComponent();
         }
 
-        Bitmap pic = null;
-
-        public Bitmap Pic
+        private class Recalc
         {
-            get { return pic; }
+            internal SizeF sizePic = SizeF.Empty;
+            internal SizeF sizeDisp = SizeF.Empty;
+        }
+
+        private ThumbSet pict = null;
+        private Recalc recalc = null;
+
+        public Func<ThumbSet> ThumbSetProvider { get; set; }
+
+        public ThumbSet Pict
+        {
+            get => pict;
             set
             {
-                if (pic != value)
+                if (pict != value)
                 {
-                    pic = value;
+                    pict = value;
+                    recalc = null;
 
-                    Recalc();
                     Invalidate();
 
-                    if (PicChanged != null)
-                        PicChanged(this, new EventArgs());
+                    PictChanged?.Invoke(this, new EventArgs());
                 }
             }
         }
 
-        public event EventHandler PicChanged;
+        public event EventHandler PictChanged;
 
-        private void Recalc()
+        private Recalc GetRecalc()
         {
-            if (pic == null)
+            if (pict == null)
             {
-                sizeDisp = Size.Empty;
-                sizePic = SizeF.Empty;
-                return;
+                return recalc = new Recalc { };
             }
             using (Graphics cv = CreateGraphics())
             {
+                var picture = ResolvePicture();
+
                 float rx = cv.DpiX;
                 float ry = cv.DpiY;
-                float px = pic.HorizontalResolution;
-                float py = pic.VerticalResolution;
-                sizePic = new SizeF(
-                    rx / px * pic.Width,
-                    ry / py * pic.Height
+                float px = picture.HorizontalResolution;
+                float py = picture.VerticalResolution;
+                var sizePic = new SizeF(
+                    rx / px * picture.Width,
+                    ry / py * picture.Height
                     );
+                SizeF sizeDisp = SizeF.Empty;
                 FitCnf fc = fitcnf;
                 switch (fc.SizeSpec)
                 {
@@ -85,27 +94,51 @@ namespace yPDFEditor
                             break;
                         }
                     case SizeSpec.FWH:
-                        sizeDisp = FitRect3.Fit(ClientRectangle, pic.Size).Size;
+                        sizeDisp = FitRect3.Fit(ClientRectangle, picture.Size).Size;
                         break;
                 }
 
                 AutoScrollMinSize = Size.Round(sizeDisp);
+
+                return recalc = new Recalc
+                {
+                    sizeDisp = sizeDisp,
+                    sizePic = sizePic,
+                };
             }
         }
 
-        SizeF sizePic = SizeF.Empty;
+        private Bitmap ResolvePicture()
+        {
+            var bitmap = pict?.Bitmap;
+            if (bitmap == null)
+            {
+                var pict = ThumbSetProvider?.Invoke();
+                if (pict != null)
+                {
+                    bitmap = pict.Bitmap;
+                }
+                if (!ReferenceEquals(pict, Pict))
+                {
+                    Pict = pict;
+                }
+            }
+            return bitmap;
+        }
 
         public float ActualRate
         {
             get
             {
-                if (sizePic.IsEmpty)
+                var recalc = GetRecalc();
+
+                if (recalc.sizePic.IsEmpty)
+                {
                     return 1;
-                return sizeDisp.Width / sizePic.Width;
+                }
+                return recalc.sizeDisp.Width / recalc.sizePic.Width;
             }
         }
-
-        SizeF sizeDisp = SizeF.Empty;
 
         private void PreViewer_Load(object sender, EventArgs e)
         {
@@ -133,11 +166,15 @@ namespace yPDFEditor
                 return;
             }
 
-            if (pic != null)
+            var picture = ResolvePicture();
+
+            if (picture != null)
             {
+                var recalc = GetRecalc();
+
                 cv.InterpolationMode = InterpolationMode.High;
 
-                cv.DrawImage(pic, RUt.Centerize(this.ClientSize, new Rectangle(AutoScrollPosition, Size.Round(sizeDisp))), new Rectangle(Point.Empty, pic.Size), GraphicsUnit.Pixel);
+                cv.DrawImage(picture, RUt.Centerize(this.ClientSize, new Rectangle(AutoScrollPosition, Size.Round(recalc.sizeDisp))), new Rectangle(Point.Empty, picture.Size), GraphicsUnit.Pixel);
 
                 cv.InterpolationMode = InterpolationMode.Default;
             }
@@ -170,11 +207,10 @@ namespace yPDFEditor
                 {
                     fitcnf = value;
 
-                    Recalc();
+                    recalc = null;
                     Invalidate();
 
-                    if (FitCnfChanged != null)
-                        FitCnfChanged(this, new EventArgs());
+                    FitCnfChanged?.Invoke(this, new EventArgs());
                 }
             }
         }
@@ -183,7 +219,7 @@ namespace yPDFEditor
 
         private void PreViewer_Resize(object sender, EventArgs e)
         {
-            Recalc();
+            recalc = null;
             Invalidate();
         }
     }

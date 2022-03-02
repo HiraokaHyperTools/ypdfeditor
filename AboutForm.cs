@@ -23,17 +23,12 @@ namespace yPDFEditor
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("http://www.gnu.org/licenses/gpl-2.0.txt");
+            Process.Start("https://github.com/HiraokaHyperTools/ypdfeditor/blob/master/LICENSE");
         }
 
         private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("http://poppler.freedesktop.org/");
-        }
-
-        private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start("http://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/");
+            Process.Start("https://github.com/HiraokaHyperTools/ypdfeditor/");
         }
     }
 }

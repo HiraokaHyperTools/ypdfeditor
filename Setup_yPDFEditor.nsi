@@ -110,12 +110,6 @@ Section "${APP}" ;No components page, name is not important
   File ".\MAPISendMailSa.exe"
   File "1.ico"
 
-  SetOutPath "$INSTDIR\GPL"
-  File /r "GPL\*.*"
-
-  SetOutPath "$INSTDIR\GPL\share\poppler"
-  File /r /x ".svn" /x ".git" "poppler-data\*.*"
-
   SetOutPath $INSTDIR
 
   WriteRegStr HKCU "Software\Classes\${APP}" "" "${TITLE}"
@@ -215,6 +209,13 @@ Section "Uninstall"
   RMDir    "$INSTDIR\share"
 
   RMDir /r "$INSTDIR\GPL"
+  
+  Delete "$INSTDIR\nl\PdfiumViewer.resources.dll"
+  RMDir  "$INSTDIR\nl"
+  Delete "$INSTDIR\x64\pdfium.dll"
+  RMDir  "$INSTDIR\x64"
+  Delete "$INSTDIR\x86\pdfium.dll"
+  RMDir  "$INSTDIR\x86"
 
   DetailPrint "関連付け更新中です。お待ちください。"
   !insertmacro UPDATEFILEASSOC

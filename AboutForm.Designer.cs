@@ -1,4 +1,4 @@
-﻿namespace yPDFEditor {
+namespace yPDFEditor {
     partial class AboutForm {
         /// <summary>
         /// 必要なデザイナ変数です。
@@ -27,11 +27,9 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.bClose = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
             this.lVer = new System.Windows.Forms.Label();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
             this.linkLabel2 = new System.Windows.Forms.LinkLabel();
-            this.linkLabel3 = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // label1
@@ -55,21 +53,12 @@
             // bClose
             // 
             this.bClose.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.bClose.Location = new System.Drawing.Point(12, 207);
+            this.bClose.Location = new System.Drawing.Point(14, 142);
             this.bClose.Name = "bClose";
             this.bClose.Size = new System.Drawing.Size(75, 23);
             this.bClose.TabIndex = 3;
             this.bClose.Text = "閉じる";
             this.bClose.UseVisualStyleBackColor = true;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 103);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(96, 12);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "利用技術について：";
             // 
             // lVer
             // 
@@ -86,38 +75,23 @@
             this.linkLabel1.LinkArea = new System.Windows.Forms.LinkArea(0, 5);
             this.linkLabel1.Location = new System.Drawing.Point(12, 61);
             this.linkLabel1.Name = "linkLabel1";
-            this.linkLabel1.Size = new System.Drawing.Size(281, 17);
+            this.linkLabel1.Size = new System.Drawing.Size(285, 17);
             this.linkLabel1.TabIndex = 7;
             this.linkLabel1.TabStop = true;
-            this.linkLabel1.Text = "GPLv2でライセンスされた、オープンソースソフトウェアです。";
+            this.linkLabel1.Text = "GPLv3 でライセンスされた、オープンソースソフトウェアです。";
             this.linkLabel1.UseCompatibleTextRendering = true;
             this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
             // linkLabel2
             // 
             this.linkLabel2.AutoSize = true;
-            this.linkLabel2.LinkArea = new System.Windows.Forms.LinkArea(22, 7);
-            this.linkLabel2.Location = new System.Drawing.Point(12, 126);
+            this.linkLabel2.Location = new System.Drawing.Point(12, 97);
             this.linkLabel2.Name = "linkLabel2";
-            this.linkLabel2.Size = new System.Drawing.Size(223, 17);
+            this.linkLabel2.Size = new System.Drawing.Size(326, 12);
             this.linkLabel2.TabIndex = 8;
             this.linkLabel2.TabStop = true;
-            this.linkLabel2.Text = "freedesktop.org様が開発されたpoppler技術";
-            this.linkLabel2.UseCompatibleTextRendering = true;
+            this.linkLabel2.Text = "https://github.com/HiraokaHyperTools/ypdfeditor/tree/master";
             this.linkLabel2.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel2_LinkClicked);
-            // 
-            // linkLabel3
-            // 
-            this.linkLabel3.AutoSize = true;
-            this.linkLabel3.LinkArea = new System.Windows.Forms.LinkArea(18, 5);
-            this.linkLabel3.Location = new System.Drawing.Point(12, 154);
-            this.linkLabel3.Name = "linkLabel3";
-            this.linkLabel3.Size = new System.Drawing.Size(194, 17);
-            this.linkLabel3.TabIndex = 9;
-            this.linkLabel3.TabStop = true;
-            this.linkLabel3.Text = "Sid Steward様が開発されたpdftk技術";
-            this.linkLabel3.UseCompatibleTextRendering = true;
-            this.linkLabel3.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel3_LinkClicked);
             // 
             // AboutForm
             // 
@@ -125,12 +99,10 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.bClose;
-            this.ClientSize = new System.Drawing.Size(344, 242);
-            this.Controls.Add(this.linkLabel3);
+            this.ClientSize = new System.Drawing.Size(440, 196);
             this.Controls.Add(this.linkLabel2);
             this.Controls.Add(this.linkLabel1);
             this.Controls.Add(this.lVer);
-            this.Controls.Add(this.label4);
             this.Controls.Add(this.bClose);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -152,10 +124,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button bClose;
-        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label lVer;
         private System.Windows.Forms.LinkLabel linkLabel1;
         private System.Windows.Forms.LinkLabel linkLabel2;
-        private System.Windows.Forms.LinkLabel linkLabel3;
     }
 }

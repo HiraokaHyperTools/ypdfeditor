@@ -1,4 +1,6 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
+  <Import Project="packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props" Condition="Exists('packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props')" />
+  <Import Project="packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props" Condition="Exists('packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props')" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -24,7 +26,10 @@
     </UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,6 +57,9 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PdfiumViewer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=e155b43a12d1aa93, processorArchitecture=MSIL">
+      <HintPath>packages\HiraokaHyperTools.PdfiumViewer.0.13.6\lib\net20\PdfiumViewer.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -71,10 +79,9 @@
     </Compile>
     <Compile Include="Delegates\Delegates.cs" />
     <Compile Include="Enums\SizeSpec.cs" />
-    <Compile Include="Enums\TvHitTestInfo.cs" />
+    <Compile Include="Utils\TvHitTestInfo.cs" />
     <Compile Include="Enums\TvHitTestLocation.cs" />
     <Compile Include="Enums\TvInsertMarkLocation.cs" />
-    <Compile Include="Exceptions\PageExtractException.cs" />
     <Compile Include="Utils\FitCnf.cs" />
     <Compile Include="Utils\FitRect3.cs" />
     <Compile Include="JForm.cs">
@@ -142,9 +149,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="App.config" />
-    <None Include="GPL\license_gpl_pdftk.zip">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -160,19 +165,11 @@
     <Compile Include="ThumbView.Designer.cs">
       <DependentUpon>ThumbView.cs</DependentUpon>
     </Compile>
-    <Compile Include="Utils\CPdftk.cs" />
-    <Compile Include="Utils\HIDGen.cs" />
-    <Compile Include="Utils\PagePic.cs" />
     <Compile Include="Utils\PDFClip.cs" />
-    <Compile Include="Utils\PDFExploder.cs" />
-    <Compile Include="Utils\PDFInfo.cs" />
-    <Compile Include="Utils\PVUt.cs" />
-    <Compile Include="Utils\ThumbGen.cs" />
+    <Compile Include="Utils\ThumbSet.cs" />
+    <Compile Include="Enums\ThumbState.cs" />
     <Compile Include="Utils\TvInsertMark.cs" />
-    <Compile Include="Utils\TvPict.cs" />
     <Compile Include="Utils\UtMarkTemp.cs" />
-    <Compile Include="Utils\UtRedir.cs" />
-    <Compile Include="Utils\WinNUt.cs" />
     <Compile Include="WIP2.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -197,18 +194,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="1.ico" />
-    <None Include="GPL\pdftk.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="GPL\pdfinfo.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="GPL\pdftoppm.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="GPL\libiconv2.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <Content Include="MAPISendMailSa.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -225,6 +210,13 @@
     <None Include="Resources\NewMessageHS.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props'))" />
+    <Error Condition="!Exists('packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

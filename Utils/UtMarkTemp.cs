@@ -23,13 +23,13 @@ namespace yPDFEditor.Utils
         {
             lock (locker)
             {
-                foreach (var fp in files)
+                foreach (var file in files)
                 {
                     try
                     {
-                        if (File.Exists(fp))
+                        if (File.Exists(file))
                         {
-                            File.Delete(fp);
+                            File.Delete(file);
                         }
                     }
                     catch

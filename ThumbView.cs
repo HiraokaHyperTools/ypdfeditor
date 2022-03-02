@@ -8,15 +8,47 @@ using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using yPDFEditor.Utils;
 using yPDFEditor.Enums;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
+using yPDFEditor.Properties;
 
 namespace yPDFEditor
 {
     public partial class ThumbView : UserControl
     {
+        private int selectFrom = -1;
+        private int selectTo = -1;
+        private Bitmap loadingImage = Resources.ExpirationHS;
+        private List<Lay> lays = new List<Lay>();
+        private int cxTile = 0;
+        private int cyTile = 0;
+        private Size maxBox => new Size(200, 280);
+        private Pen penSelFocus = new Pen(Color.FromArgb(50, 50, 250));
+        private Pen penSel = new Pen(Color.FromArgb(150, 150, 200));
+        private bool draggingNow = false;
+        private TvInsertMark insertMark = new TvInsertMark(-1);
+        private int numDragChance = -1;
+        private bool skipMouseUp = true;
+
+        /// <summary>
+        /// AutoScrollPosition 加算済み
+        /// </summary>
+        private Point pt0 = Point.Empty;
+
+        /// <summary>
+        /// AutoScrollPosition 加算済み
+        /// </summary>
+        private Point pt1 = Point.Empty;
+
+        public event EventHandler PictDrag;
+
         public ThumbView()
         {
             InitializeComponent();
         }
+
+        public event EventHandler SelectionChanged;
 
         private void ThumbView_Load(object sender, EventArgs e)
         {
@@ -24,9 +56,11 @@ namespace yPDFEditor
         }
 
         [NonSerialized()]
-        BindingList<TvPict> picts = null;
+        ObservableCollection<ThumbSet> picts = null;
 
-        public BindingList<TvPict> Picts
+        public Func<int, ThumbSet> ThumbSetProvider { get; set; }
+
+        public ObservableCollection<ThumbSet> Picts
         {
             get
             {
@@ -34,107 +68,131 @@ namespace yPDFEditor
             }
             set
             {
-                if (this.picts != null) picts.ListChanged -= new ListChangedEventHandler(Picts_ListChanged);
+                if (picts != null)
+                {
+                    picts.CollectionChanged -= Picts_CollectionChanged;
+                }
 
-                this.picts = value;
+                picts = value;
 
-                if (this.picts != null) picts.ListChanged += new ListChangedEventHandler(Picts_ListChanged);
+                if (picts != null)
+                {
+                    picts.CollectionChanged += Picts_CollectionChanged;
+                }
             }
         }
 
-        void Picts_ListChanged(object sender, ListChangedEventArgs e)
+        private void Picts_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            switch (e.ListChangedType)
+            switch (e.Action)
             {
-                case ListChangedType.ItemAdded:
-                    if (e.NewIndex <= SelLast)
+                case NotifyCollectionChangedAction.Add:
                     {
-                        iSel++;
-                        iSel2++;
+                        if (e.NewStartingIndex <= SelectionLast)
+                        {
+                            selectTo++;
+                            selectFrom++;
 
-                        LayoutClient();
+                            LayoutClient();
 
-                        if (SelChanged != null)
-                            SelChanged(this, e);
+                            SelectionChanged?.Invoke(this, e);
+                        }
+                        else
+                        {
+                            LayoutClient();
+                        }
+                        break;
                     }
-                    else
-                    {
-                        LayoutClient();
-                    }
-                    break;
 
-                case ListChangedType.ItemDeleted:
+                case NotifyCollectionChangedAction.Remove:
                     {
                         bool isUp = false;
 
-                        if (e.NewIndex < SelFirst || SelFirst == picts.Count)
+                        if (e.NewStartingIndex < SelectionFirst || SelectionFirst == picts.Count)
                         {
-                            if (iSel < iSel2) iSel--; else iSel2--;
-                            isUp = true;
-                        }
-                        if (e.NewIndex < SelLast || SelLast == picts.Count)
-                        {
-                            if (iSel < iSel2) iSel2--; else iSel--;
+                            if (selectTo < selectFrom)
+                            {
+                                selectTo--;
+                            }
+                            else
+                            {
+                                selectFrom--;
+                            }
                             isUp = true;
                         }
 
-                        bool itsMe = e.NewIndex == SelFirst || e.NewIndex == SelLast;
+                        if (e.NewStartingIndex < SelectionLast || SelectionLast == picts.Count)
+                        {
+                            if (selectTo < selectFrom)
+                            {
+                                selectFrom--;
+                            }
+                            else
+                            {
+                                selectTo--;
+                            }
+                            isUp = true;
+                        }
+
+                        bool itsMe = e.NewStartingIndex == SelectionFirst || e.NewStartingIndex == SelectionLast;
 
                         LayoutClient();
 
                         if (isUp || itsMe)
-                            if (SelChanged != null)
-                                SelChanged(this, e);
+                        {
+                            SelectionChanged?.Invoke(this, e);
+                        }
 
                         break;
                     }
 
-                case ListChangedType.ItemMoved:
-                case ListChangedType.Reset:
-                    LayoutClient();
-                    if (SelChanged != null)
-                        SelChanged(this, e);
-                    break;
-                case ListChangedType.ItemChanged:
-                    if (SelChanged != null)
-                        SelChanged(this, e);
-                    Invalidate();
-                    break;
+                case NotifyCollectionChangedAction.Reset:
+                case NotifyCollectionChangedAction.Move:
+                    {
+                        LayoutClient();
+                        SelectionChanged?.Invoke(this, e);
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Replace:
+                    {
+                        Invalidate();
+                        break;
+                    }
             }
         }
 
-        Size MaxBox { get { return new Size(200, 280); } }
-
-        Rectangle RectPic
+        private Rectangle RectPic
         {
             get
             {
-                Size size = MaxBox;
+                Size size = maxBox;
                 return Rectangle.FromLTRB(15, 15, size.Width - 15, size.Height - 20);
             }
         }
 
         public bool IsSelected(int i)
         {
-            if (0 <= i && SelFirst <= i && i <= SelLast)
+            if (0 <= i && SelectionFirst <= i && i <= SelectionLast)
+            {
                 return true;
+            }
             return false;
         }
 
-        class Lay
+        private class Lay
         {
-            public int i;
-            public Rectangle rcBound, rcPic;
+            public int pageIndex;
+            public Rectangle boundRect;
+            public Rectangle picRect;
 
-            public Lay(int i, Rectangle rcBound, Rectangle rcPic)
+            public Lay(int index, Rectangle rcBound, Rectangle rcPic)
             {
-                this.i = i;
-                this.rcBound = rcBound;
-                this.rcPic = rcPic;
+                this.pageIndex = index;
+                this.boundRect = rcBound;
+                this.picRect = rcPic;
             }
         }
-        List<Lay> lays = new List<Lay>();
-        int cxTile = 0, cyTile = 0;
 
         [Browsable(false)]
         public int RowCount { get { return cyTile; } }
@@ -144,34 +202,39 @@ namespace yPDFEditor
 
         void LayoutClient()
         {
-            int cnt = (picts == null) ? 0 : picts.Count;
-            this.cxTile = Math.Max(1, ClientSize.Width / MaxBox.Width);
-            this.cyTile = Math.Max(1, (cnt + cxTile - 1) / (cxTile));
+            int cnt = picts?.Count ?? 0;
+            cxTile = Math.Max(1, ClientSize.Width / maxBox.Width);
+            cyTile = Math.Max(1, (cnt + cxTile - 1) / (cxTile));
 
             lays.Clear();
 
             if (cnt != 0)
             {
-                for (int y = 0, i = 0; y < cyTile || i < cnt; y++)
+                int index = 0;
+                for (int y = 0; y < cyTile || index < cnt; y++)
                 {
-                    for (int x = 0; x < cxTile && i < cnt; x++, i++)
+                    for (int x = 0; x < cxTile && index < cnt; x++, index++)
                     {
-                        Rectangle rc1 = new Rectangle(new Point(MaxBox.Width * x, MaxBox.Height * y), MaxBox);
+                        Rectangle rc1 = new Rectangle(new Point(maxBox.Width * x, maxBox.Height * y), maxBox);
                         Rectangle rc2 = RectPic;
                         rc2.Offset(rc1.Location);
-                        lays.Add(new Lay(i, rc1, rc2));
+                        lays.Add(new Lay(index, rc1, rc2));
                     }
                 }
 
-                if (iSel < 0 && lays.Count != 0)
-                    SSel = 0;
+                if (selectTo < 0 && lays.Count != 0)
+                {
+                    SelectTo = 0;
+                }
 
-                AutoScrollMinSize = new Size(MaxBox.Width, MaxBox.Height * cyTile);
+                AutoScrollMinSize = new Size(maxBox.Width, maxBox.Height * cyTile);
             }
             else
             {
-                if (iSel >= 0)
-                    SSel = -1;
+                if (selectTo >= 0)
+                {
+                    SelectTo = -1;
+                }
 
                 AutoScrollMinSize = Size.Empty;
             }
@@ -179,17 +242,15 @@ namespace yPDFEditor
             Invalidate();
         }
 
-        TvInsertMark iMark = new TvInsertMark(-1);
-
         [Browsable(false)]
         public TvInsertMark InsertMark
         {
-            get { return iMark; }
+            get => insertMark;
             set
             {
-                if (iMark != value)
+                if (insertMark != value)
                 {
-                    iMark = value;
+                    insertMark = value;
 
                     Invalidate();
                 }
@@ -218,15 +279,19 @@ namespace yPDFEditor
                 return;
             }
 
-            foreach (Lay lay in lays)
+            foreach (var lay in lays)
             {
-                Rectangle rc1 = lay.rcBound;
+                Rectangle rc1 = lay.boundRect;
                 rc1.Offset(AutoScrollPosition);
                 if (e.ClipRectangle.IntersectsWith(rc1))
                 {
-                    int i = lay.i;
-                    Bitmap pic = picts[i].DefTumbGen.GetThumbnail(RectPic.Size);
-                    Rectangle rc2 = lay.rcPic;
+                    int i = lay.pageIndex;
+                    if (picts[i].State == ThumbState.Delayed)
+                    {
+                        picts[i] = ThumbSetProvider(i);
+                    }
+                    Bitmap pic = picts[i].Bitmap ?? loadingImage;
+                    Rectangle rc2 = lay.picRect;
                     rc2.Offset(AutoScrollPosition);
                     cv.DrawImage(pic, FitRect3.Fit(rc2, pic.Size));
                     cv.DrawRectangle(Pens.Black, rc2);
@@ -234,26 +299,28 @@ namespace yPDFEditor
                     {
                         Rectangle rcBorder = rc2;
                         Pen p = Pens.Transparent;
-                        switch (GetSelLv(i))
+                        switch (GetSelectionLevelOf(i))
                         {
-                            case SelLv.Sel: p = pSel; break;
-                            case SelLv.SelFoc: p = pSelFoc; break;
+                            case SelectionLevel.Selected: p = penSel; break;
+                            case SelectionLevel.Focused: p = penSelFocus; break;
                         }
                         rcBorder.Inflate(1, 1);
                         if (p != Pens.Transparent)
+                        {
                             for (int w = 0; w < 3; w++)
                             {
                                 rcBorder.Inflate(1, 1);
                                 cv.DrawRectangle(p, rcBorder);
                             }
+                        }
                     }
 
-                    if (iMark.Item == lay.i)
+                    if (insertMark.Index == lay.pageIndex)
                     {
                         int w = 8, hw = w / 2;
                         Rectangle rc3 = rc1;
                         rc3.Inflate(-1, -1);
-                        if (0 != (iMark.Location & TvInsertMarkLocation.Right))
+                        if (0 != (insertMark.Location & TvInsertMarkLocation.Right))
                         {
                             Point[] pts = new Point[] {
                                 new Point(rc3.Right -1,      rc3.Top),
@@ -266,7 +333,7 @@ namespace yPDFEditor
                             };
                             cv.FillPolygon(Brushes.Blue, pts);
                         }
-                        if (0 != (iMark.Location & TvInsertMarkLocation.Left))
+                        if (0 != (insertMark.Location & TvInsertMarkLocation.Left))
                         {
                             Point[] pts = new Point[] {
                                 new Point(rc3.X,      rc3.Top),
@@ -279,7 +346,7 @@ namespace yPDFEditor
                             };
                             cv.FillPolygon(Brushes.Blue, pts);
                         }
-                        if (0 != (iMark.Location & TvInsertMarkLocation.Top))
+                        if (0 != (insertMark.Location & TvInsertMarkLocation.Top))
                         {
                             Point[] pts = new Point[] {
                                 new Point(rc3.Left,          rc3.Top),
@@ -292,7 +359,7 @@ namespace yPDFEditor
                             };
                             cv.FillPolygon(Brushes.Blue, pts);
                         }
-                        if (0 != (iMark.Location & TvInsertMarkLocation.Bottom))
+                        if (0 != (insertMark.Location & TvInsertMarkLocation.Bottom))
                         {
                             Point[] pts = new Point[] {
                                 new Point(rc3.Left,          rc3.Bottom -1),
@@ -309,7 +376,7 @@ namespace yPDFEditor
                 }
             }
 
-            if (fSelDrag)
+            if (draggingNow)
             {
                 cv.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -326,8 +393,10 @@ namespace yPDFEditor
             }
         }
 
-        // AutoScrollPosition加算済み
-        Rectangle RectDrag
+        /// <summary>
+        /// AutoScrollPosition 加算済み
+        /// </summary>
+        private Rectangle RectDrag
         {
             get
             {
@@ -340,125 +409,139 @@ namespace yPDFEditor
             }
         }
 
-        Pen pSelFoc = new Pen(Color.FromArgb(50, 50, 250));
-        Pen pSel = new Pen(Color.FromArgb(150, 150, 200));
-
         private void ThumbView_Resize(object sender, EventArgs e)
         {
             LayoutClient();
         }
 
-        int iSel = -1, iSel2 = -1;
-
-        public event EventHandler SelChanged;
-
+        /// <summary>
+        /// zero based
+        /// </summary>
         [Browsable(false)]
-        public int SSel
+        public int SelectTo
         {
             get
             {
-                return iSel;
+                return selectTo;
             }
             set
             {
                 int newSel = Math.Min(lays.Count - 1, Math.Max(0, value));
-                if (newSel == iSel2 && newSel == iSel)
+                if (newSel == selectFrom && newSel == selectTo)
+                {
                     return;
+                }
 
-                iSel = iSel2 = newSel;
-                MakeVisible(iSel2);
+                selectTo = selectFrom = newSel;
+                MakeVisible(selectFrom);
                 Invalidate();
 
-                if (SelChanged != null)
-                    SelChanged(this, new EventArgs());
+                SelectionChanged?.Invoke(this, new EventArgs());
             }
         }
 
+        /// <summary>
+        /// zero based
+        /// </summary>
         [Browsable(false)]
-        public int SelFirst { get { return Math.Min(iSel, iSel2); } }
+        public int SelectionFirst => Math.Min(selectTo, selectFrom);
+
+        /// <summary>
+        /// zero based
+        /// </summary>
+        [Browsable(false)]
+        public int SelectionLast => Math.Max(selectTo, selectFrom);
 
         [Browsable(false)]
-        public int SelLast { get { return Math.Max(iSel, iSel2); } }
-
-        [Browsable(false)]
-        public int SelCount
+        public int SelectionLength
         {
             get
             {
-                if (SelFirst < 0)
+                if (SelectionFirst < 0)
+                {
                     return 0;
-                return SelLast - SelFirst + 1;
+                }
+                return SelectionLast - SelectionFirst + 1;
             }
         }
 
         [Browsable(false)]
-        public int Sel2
+        public int SelectFrom
         {
             get
             {
-                return iSel2;
+                return selectFrom;
             }
             set
             {
                 int newSel = Math.Min(lays.Count - 1, Math.Max(0, value));
-                if (newSel == iSel2)
+                if (newSel == selectFrom)
+                {
                     return;
+                }
 
-                iSel2 = newSel;
-                MakeVisible(iSel2);
+                selectFrom = newSel;
+                MakeVisible(selectFrom);
                 Invalidate();
 
-                if (SelChanged != null)
-                    SelChanged(this, new EventArgs());
+                SelectionChanged?.Invoke(this, new EventArgs());
             }
         }
 
-        enum SelLv
+        private enum SelectionLevel
         {
-            None, Sel, SelFoc,
+            None,
+            Selected,
+            Focused,
         }
 
-        SelLv GetSelLv(int i)
+        private SelectionLevel GetSelectionLevelOf(int pageIndex)
         {
-            if (i == iSel2)
-                return SelLv.SelFoc;
-            if (iSel <= iSel2 && iSel <= i && i <= iSel2)
-                return SelLv.Sel;
-            if (iSel2 <= iSel && iSel2 <= i && i <= iSel)
-                return SelLv.Sel;
+            if (pageIndex == selectFrom)
+            {
+                return SelectionLevel.Focused;
+            }
+            if (selectTo <= selectFrom && selectTo <= pageIndex && pageIndex <= selectFrom)
+            {
+                return SelectionLevel.Selected;
+            }
+            if (selectFrom <= selectTo && selectFrom <= pageIndex && pageIndex <= selectTo)
+            {
+                return SelectionLevel.Selected;
+            }
 
-            return SelLv.None;
+            return SelectionLevel.None;
         }
 
-        private void MakeVisible(int iSel2)
+        private void MakeVisible(int pageIndex)
         {
             foreach (Lay lay in lays)
             {
-                if (lay.i == iSel2)
+                if (lay.pageIndex == pageIndex)
                 {
                     Point pos = Point.Empty - new Size(AutoScrollPosition);
                     Rectangle rc = new Rectangle(pos, ClientSize);
 
-                    if (lay.rcBound.X < rc.X)
+                    if (lay.boundRect.X < rc.X)
                     {
                         // ←へ
-                        pos.X = lay.rcBound.X;
+                        pos.X = lay.boundRect.X;
                     }
-                    else if (rc.Right < lay.rcBound.Right)
+                    else if (rc.Right < lay.boundRect.Right)
                     {
                         // →へ
-                        pos.X = lay.rcBound.Right - rc.Width;
+                        pos.X = lay.boundRect.Right - rc.Width;
                     }
 
-                    if (lay.rcBound.Y < rc.Y)
+                    if (lay.boundRect.Y < rc.Y)
                     {
                         // ↑へ
-                        pos.Y = lay.rcBound.Y;
+                        pos.Y = lay.boundRect.Y;
                     }
-                    else if (rc.Bottom < lay.rcBound.Bottom)
+                    else if (rc.Bottom < lay.boundRect.Bottom)
                     {
                         // ↓へ
-                        pos.Y = lay.rcBound.Bottom - rc.Height;
+                        pos.Y = lay.boundRect.Bottom - rc.Height;
                     }
 
                     AutoScrollPosition = (pos);
@@ -478,22 +561,22 @@ namespace yPDFEditor
                 switch (e.KeyCode)
                 {
                     case Keys.Home:
-                        Sel2 = 0;
+                        SelectFrom = 0;
                         break;
                     case Keys.End:
-                        Sel2 = int.MaxValue;
+                        SelectFrom = int.MaxValue;
                         break;
                     case Keys.Left:
-                        Sel2--;
+                        SelectFrom--;
                         break;
                     case Keys.Right:
-                        Sel2++;
+                        SelectFrom++;
                         break;
                     case Keys.Up:
-                        Sel2 -= cxTile;
+                        SelectFrom -= cxTile;
                         break;
                     case Keys.Down:
-                        Sel2 += cxTile;
+                        SelectFrom += cxTile;
                         break;
                 }
             }
@@ -502,22 +585,22 @@ namespace yPDFEditor
                 switch (e.KeyCode)
                 {
                     case Keys.Home:
-                        SSel = 0;
+                        SelectTo = 0;
                         break;
                     case Keys.End:
-                        SSel = int.MaxValue;
+                        SelectTo = int.MaxValue;
                         break;
                     case Keys.Left:
-                        SSel = Sel2 - 1;
+                        SelectTo = SelectFrom - 1;
                         break;
                     case Keys.Right:
-                        SSel = Sel2 + 1;
+                        SelectTo = SelectFrom + 1;
                         break;
                     case Keys.Up:
-                        SSel = Sel2 - cxTile;
+                        SelectTo = SelectFrom - cxTile;
                         break;
                     case Keys.Down:
-                        SSel = Sel2 + cxTile;
+                        SelectTo = SelectFrom + cxTile;
                         break;
                 }
             }
@@ -545,15 +628,6 @@ namespace yPDFEditor
             }
         }
 
-        bool fSelDrag = false;
-
-        // AutoScrollPosition加算済み
-        Point pt0 = Point.Empty, pt1 = Point.Empty;
-
-        int fPictDragChance = -1;
-
-        bool fSkipUp = true;
-
         private void ThumbView_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
@@ -566,39 +640,40 @@ namespace yPDFEditor
                 }
                 else
                 {
-                    fSkipUp = true;
+                    skipMouseUp = true;
 
                     if (i < 0 && e.Button == MouseButtons.Left)
                     {
                         // Start dragging
-                        this.fSelDrag = true;
+                        this.draggingNow = true;
                         this.pt0 = this.pt1 = pt;
 
-                        SSel = Sel2;
+                        SelectTo = SelectFrom;
                     }
                     else
                     {
                         // Select it
-                        fPictDragChance = 10;
+                        numDragChance = 10;
 
                         if (!IsSelected(i))
                         {
                             if (0 != (ModifierKeys & Keys.Shift))
                             {
-                                Sel2 = i;
+                                SelectFrom = i;
                             }
                             else
                             {
-                                SSel = i;
+                                SelectTo = i;
                             }
                         }
-                        else fSkipUp = false;
+                        else
+                        {
+                            skipMouseUp = false;
+                        }
                     }
                 }
             }
         }
-
-        public event EventHandler PictDrag;
 
         /// <summary>
         /// 画像を探す
@@ -610,8 +685,10 @@ namespace yPDFEditor
         {
             foreach (Lay lay in lays)
             {
-                if (lay.rcPic.Contains(x, y))
-                    return lay.i;
+                if (lay.picRect.Contains(x, y))
+                {
+                    return lay.pageIndex;
+                }
             }
             return -1;
         }
@@ -641,11 +718,13 @@ namespace yPDFEditor
             {
                 foreach (Lay lay in lays)
                 {
-                    if (lay.rcBound.Contains(pt))
+                    if (lay.boundRect.Contains(pt))
                     {
-                        return new TvHitTestInfo(lay.i, TvHitTestLocation.Box
-                            | (lay.rcPic.Contains(pt) ? TvHitTestLocation.Pict : TvHitTestLocation.None)
-                            );
+                        return new TvHitTestInfo(
+                            lay.pageIndex,
+                            TvHitTestLocation.Box
+                                | (lay.picRect.Contains(pt) ? TvHitTestLocation.Pict : TvHitTestLocation.None)
+                        );
                     }
                 }
             }
@@ -681,8 +760,8 @@ namespace yPDFEditor
             bool isEmpty = cnt == 0;
             if (!isEmpty)
             {
-                int cxItem = MaxBox.Width;
-                int cyItem = MaxBox.Height;
+                int cxItem = maxBox.Width;
+                int cyItem = maxBox.Height;
 
                 if (pt.Y < 0)
                 {
@@ -730,18 +809,18 @@ namespace yPDFEditor
                         // Mx
                         foreach (Lay lay in lays)
                         {
-                            if (lay.rcBound.Contains(pt))
+                            if (lay.boundRect.Contains(pt))
                             {
                                 bool atAfter = (0 != (flags & SuggestFlags.OnlyUpDown))
-                                    ? pt.Y >= lay.rcBound.Top + lay.rcBound.Height / 3
-                                    : pt.X >= lay.rcBound.Left + lay.rcBound.Width / 3
+                                    ? pt.Y >= lay.boundRect.Top + lay.boundRect.Height / 3
+                                    : pt.X >= lay.boundRect.Left + lay.boundRect.Width / 3
                                     ;
-                                bool last = 0 == ((lay.i + 1) % cxTile);
+                                bool last = 0 == ((lay.pageIndex + 1) % cxTile);
                                 if (atAfter && last)
-                                    return new TvInsertMark(lay.i, after);
+                                    return new TvInsertMark(lay.pageIndex, after);
                                 if (atAfter)
-                                    return new TvInsertMark(lay.i + 1, before);
-                                return new TvInsertMark(lay.i, before);
+                                    return new TvInsertMark(lay.pageIndex + 1, before);
+                                return new TvInsertMark(lay.pageIndex, before);
                             }
                         }
                     }
@@ -760,17 +839,19 @@ namespace yPDFEditor
             {
                 if (this.Capture)
                 {
-                    if (fSelDrag)
+                    if (draggingNow)
                     {
-                        this.fSelDrag = false;
+                        this.draggingNow = false;
                         this.Refresh();
                     }
-                    else if (!fSkipUp)
+                    else if (!skipMouseUp)
                     {
                         Point pt = e.Location - new Size(AutoScrollPosition);
                         int i = HitTestPic(pt.X, pt.Y);
                         if (i >= 0)
-                            SSel = i;
+                        {
+                            SelectTo = i;
+                        }
                     }
                 }
             }
@@ -783,7 +864,7 @@ namespace yPDFEditor
                 Point pt = e.Location - new Size(AutoScrollPosition);
                 if (this.Capture)
                 {
-                    if (fSelDrag)
+                    if (draggingNow)
                     {
                         this.pt1 = pt;
 
@@ -792,41 +873,38 @@ namespace yPDFEditor
                         int iLast = int.MinValue;
                         foreach (Lay lay in lays)
                         {
-                            if (rc.IntersectsWith(lay.rcPic))
+                            if (rc.IntersectsWith(lay.picRect))
                             {
-                                iFirst = Math.Min(iFirst, lay.i);
-                                iLast = Math.Max(iLast, lay.i);
+                                iFirst = Math.Min(iFirst, lay.pageIndex);
+                                iLast = Math.Max(iLast, lay.pageIndex);
                             }
                         }
                         if (iFirst != int.MaxValue && iLast != int.MinValue)
                         {
-                            if (iSel != iFirst || iSel2 != iLast)
+                            if (selectTo != iFirst || selectFrom != iLast)
                             {
-                                iSel2 = iFirst;
-                                iSel = iLast;
+                                selectFrom = iFirst;
+                                selectTo = iLast;
 
-                                if (SelChanged != null)
-                                    SelChanged(this, new EventArgs());
+                                if (SelectionChanged != null)
+                                    SelectionChanged(this, new EventArgs());
                             }
                         }
 
                         this.Refresh();
                     }
-                    else if (fPictDragChance == 0)
+                    else if (numDragChance == 0)
                     {
-                        if (PictDrag != null)
-                            PictDrag(this, new EventArgs());
+                        PictDrag?.Invoke(this, new EventArgs());
 
-                        fPictDragChance = -1;
+                        numDragChance = -1;
                     }
                     else
                     {
-                        fPictDragChance--;
+                        numDragChance--;
                     }
                 }
             }
         }
-
-
     }
 }
