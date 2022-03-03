@@ -10,8 +10,6 @@ namespace Unittest.Tests
 {
     public class SomeTests
     {
-        private string FilesDir => Path.Combine(TestContext.CurrentContext.TestDirectory, "files");
-
         [Test]
         public void Tests()
         {

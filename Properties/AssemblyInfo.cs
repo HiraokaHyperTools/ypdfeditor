@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyInformationalVersion("0.14")] // here
+[assembly: AssemblyInformationalVersion("0.15")] // here
 
 // アセンブリに関する一般情報は以下の属性セットをとおして制御されます。 
 // アセンブリに関連付けられている情報を変更するには、

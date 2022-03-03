@@ -79,6 +79,7 @@
     </Compile>
     <Compile Include="Delegates\Delegates.cs" />
     <Compile Include="Enums\SizeSpec.cs" />
+    <Compile Include="Utils\PdfEdit.cs" />
     <Compile Include="Utils\TvHitTestInfo.cs" />
     <Compile Include="Enums\TvHitTestLocation.cs" />
     <Compile Include="Enums\TvInsertMarkLocation.cs" />

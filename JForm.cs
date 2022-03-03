@@ -21,16 +21,20 @@ namespace yPDFEditor
 {
     public partial class JForm : Form
     {
-        private string fp = null;
-        private string fpCurrent = null;
-        private PdfDocument pdfDoc = null;
-        private MemoryStream pdfMem = new MemoryStream();
+        private PdfEdit pdfEdit = new PdfEdit();
+        private string openThisFile = null;
 
         public JForm(string file)
         {
             InitializeComponent();
 
-            this.fp = file;
+            tv.Picts = new ObservableCollection<ThumbSet>();
+            tv.Picts.CollectionChanged += Picts_CollectionChanged;
+
+            openThisFile = file;
+
+            pdfEdit.UpdateTitle = UpdateTitle;
+            pdfEdit.Picts = tv.Picts;
 
             tv.ThumbSetProvider = (pageIndex) =>
             {
@@ -38,8 +42,6 @@ namespace yPDFEditor
             };
             preViewer.ThumbSetProvider = () => LoadPict();
         }
-
-        bool isModified = false;
 
         private void bNew_Click(object sender, EventArgs e)
         {
@@ -53,12 +55,12 @@ namespace yPDFEditor
 
         TState TrySave()
         {
-            if (!Modified) return TState.Yes;
+            if (!pdfEdit.Modified) return TState.Yes;
 
-            switch (MessageBox.Show(this, "変更されています。保存しますか。", Path.GetFileName(Currentfp), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation))
+            switch (MessageBox.Show(this, "変更されています。保存しますか。", Path.GetFileName(pdfEdit.Currentfp), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation))
             {
                 case DialogResult.Yes:
-                    SaveFile(Currentfp);
+                    SaveFile(pdfEdit.Currentfp);
                     return TState.Yes;
                 case DialogResult.No:
                     return TState.No;
@@ -69,12 +71,12 @@ namespace yPDFEditor
 
         TState TrySave2()
         {
-            if (!Modified) return TState.Yes;
+            if (!pdfEdit.Modified) return TState.Yes;
 
-            switch (MessageBox.Show(this, "先に保存しますか。", Path.GetFileName(Currentfp), MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation))
+            switch (MessageBox.Show(this, "先に保存しますか。", Path.GetFileName(pdfEdit.Currentfp), MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation))
             {
                 case DialogResult.Yes:
-                    SaveFile(Currentfp);
+                    SaveFile(pdfEdit.Currentfp);
                     return TState.Yes;
                 case DialogResult.No:
                 default:
@@ -89,55 +91,23 @@ namespace yPDFEditor
                 case TState.Yes:
                 case TState.No:
                     tv.Picts.Clear();
-                    Currentfp = null;
-                    pdfDoc?.Dispose();
-                    pdfDoc = null;
-                    Modified = false;
+                    pdfEdit.Close();
                     break;
             }
         }
 
         String TitleTemp = String.Empty;
 
-        bool Modified
-        {
-            get
-            {
-                return isModified;
-            }
-            set
-            {
-                isModified = value;
-                UpdateTitle();
-            }
-        }
-
-        String Currentfp
-        {
-            get
-            {
-                return fpCurrent;
-            }
-            set
-            {
-                fpCurrent = value;
-                UpdateTitle();
-            }
-        }
-
         private void UpdateTitle()
         {
-            this.Text = (fpCurrent != null)
-                ? Path.GetFileName(fpCurrent) + (Modified ? "*" : "") + " -- " + TitleTemp
-                : TitleTemp + (Modified ? " *" : "")
+            this.Text = (pdfEdit.Currentfp != null)
+                ? Path.GetFileName(pdfEdit.Currentfp) + (pdfEdit.Modified ? "*" : "") + " -- " + TitleTemp
+                : TitleTemp + (pdfEdit.Modified ? " *" : "")
                 ;
         }
 
         private void JForm_Load(object sender, EventArgs e)
         {
-            tv.Picts = new ObservableCollection<ThumbSet>();
-            tv.Picts.CollectionChanged += Picts_CollectionChanged;
-
             this.Text += " " + Application.ProductVersion;
 
             TitleTemp = this.Text;
@@ -145,9 +115,9 @@ namespace yPDFEditor
             tstop.Location = Point.Empty;
             tsvis.Location = new Point(0, tstop.Height);
 
-            if (fp != null)
+            if (openThisFile != null)
             {
-                OpenFile(fp);
+                OpenFile(openThisFile);
             }
 
             tscRate.SelectedIndex = 0;
@@ -205,27 +175,7 @@ namespace yPDFEditor
 
         private void OpenFile(String file)
         {
-            pdfDoc?.Dispose();
-            pdfMem?.Dispose();
-
-            using (var fs = File.OpenRead(file))
-            {
-                pdfMem = new MemoryStream();
-                fs.CopyTo(pdfMem);
-                pdfMem.Position = 0;
-            }
-
-            pdfDoc = PdfDocument.Load(pdfMem);
-
-            tv.Picts.Clear();
-            Currentfp = null;
-            int cnt = pdfDoc.PageCount;
-            for (int i = 0; i < cnt; i++)
-            {
-                tv.Picts.Add(ThumbSet.Delayed);
-            }
-            Currentfp = file;
-            Modified = false;
+            pdfEdit.OpenFile(file);
         }
 
         private ThumbSet LoadPreviewOf(int i)
@@ -239,7 +189,7 @@ namespace yPDFEditor
 
         private ThumbSet LoadPict()
         {
-            if (pdfDoc == null || tv.SelectionFirst == -1)
+            if (!pdfEdit.IsOpened || tv.SelectionFirst == -1)
             {
                 return null;
             }
@@ -279,17 +229,7 @@ namespace yPDFEditor
 
         private Bitmap GetThumbnailOf(int pageIndex, int maxWidth, int maxHeight)
         {
-            var pageSize = pdfDoc.PageSizes[pageIndex];
-            pageSize.Width *= 2;
-            pageSize.Height *= 2;
-            var rect = FitRect3.Fit(
-                new Rectangle(0, 0, Math.Max(16, maxWidth), Math.Max(16, maxHeight)),
-                Size.Truncate(pageSize)
-            );
-            var cx = rect.Width;
-            var cy = rect.Height;
-            var bitmap = (Bitmap)pdfDoc.Render(pageIndex, cx, cy, 96, 96, false);
-            return bitmap;
+            return pdfEdit.GetThumbnailOf(pageIndex, maxWidth, maxHeight);
         }
 
         private void tscRate_SelectedIndexChanged(object sender, EventArgs e)
@@ -387,17 +327,7 @@ namespace yPDFEditor
             vsc.Panel2Collapsed = !bShowPreView.Checked;
         }
 
-        public byte[] GetPDF(int pageIdx)
-        {
-            using (MemoryStream os = new MemoryStream())
-            {
-                using (var newDoc = PdfDocument.Compose(pdfDoc, $"{1 + pageIdx}"))
-                {
-                    newDoc.Save(os);
-                }
-                return os.ToArray();
-            }
-        }
+        public byte[] GetPDF(int pageIdx) => pdfEdit.GetPDF(pageIdx);
 
         private void tv_PictDrag(object sender, EventArgs e)
         {
@@ -421,28 +351,14 @@ namespace yPDFEditor
             }
         }
 
-        private void EditDeletePages(int firstIdx, int lastIdx)
-        {
-            for (int x = firstIdx; x <= lastIdx; x++)
-            {
-                pdfDoc.DeletePage(firstIdx);
-                tv.Picts.RemoveAt(firstIdx);
-            }
-
-            if (tv.Picts.Any() || Currentfp != null)
-            {
-                Modified = true;
-            }
-            else
-            {
-                Modified = false;
-            }
-        }
+        private void EditDeletePages(int firstIdx, int lastIdx) => pdfEdit.DeletePages(firstIdx, lastIdx);
 
         private void tv_QueryContinueDrag(object sender, QueryContinueDragEventArgs e)
         {
             if (e.EscapePressed)
+            {
                 e.Action = DragAction.Cancel;
+            }
         }
 
         private void tv_DragEnter(object sender, DragEventArgs e)
@@ -516,7 +432,7 @@ namespace yPDFEditor
             if (fileList != null)
             {
                 DialogResult res;
-                if (Currentfp == null)
+                if (pdfEdit.Currentfp == null)
                 {
                     res = DialogResult.OK;
                 }
@@ -607,22 +523,10 @@ namespace yPDFEditor
                             {
                                 byte[] bin = clip.GetPDF(lastSel + t);
 
-                                using (var pdfIn = PdfDocument.Load(new MemoryStream(bin, false)))
+                                using (var pdfFile = new MemoryStream(bin, false))
                                 {
-                                    MakesureDoc();
-                                    pdfDoc.ImportPages(pdfIn, null, x + t);
-                                    Modified = true;
+                                    pdfEdit.InsertPages(pdfFile, x + t);
                                 }
-                            }
-                        }
-                    }
-
-                    {
-                        using (WIPPanel wipp = new WIPPanel(tv))
-                        {
-                            for (int x = 0; x < cnt; x++)
-                            {
-                                tv.Picts.Insert(destIdx + x, ThumbSet.Delayed);
                             }
                         }
                     }
@@ -635,112 +539,11 @@ namespace yPDFEditor
             }
         }
 
-        private void EditInsertPDF(string file, int destIdx)
-        {
-            using (var pdfIn = PdfDocument.Load(file))
-            {
-                var numInPages = pdfIn.PageCount;
-                MakesureDoc();
-                pdfDoc.ImportPages(pdfIn, null, numInPages);
+        private void EditInsertPDF(string file, int destIdx) => pdfEdit.InsertPDF(file, destIdx);
 
-                Modified = true;
+        private void EditMovePages(int destIdx, int firstIdx, int lastIdx) => pdfEdit.MovePages(destIdx, firstIdx, lastIdx);
 
-                for (int i = 0; i < numInPages; i++, destIdx++)
-                {
-                    tv.Picts.Insert(destIdx, ThumbSet.Delayed);
-                }
-            }
-        }
-
-        private void EditMovePages(int destIdx, int firstIdx, int lastIdx)
-        {
-            var numPages = tv.Picts.Count;
-            var pageNums = new List<int>();
-            for (int x = 0; x <= numPages; x++)
-            {
-                if (destIdx == x)
-                {
-                    for (int y = firstIdx; y <= lastIdx; y++)
-                    {
-                        pageNums.Add(1 + y);
-                    }
-                }
-                if (x < tv.Picts.Count && (x < firstIdx || lastIdx < x))
-                {
-                    pageNums.Add(1 + x);
-                }
-            }
-
-            EditSetPages(pageNums.ToArray());
-        }
-
-        private void EditSetPages(int[] indices)
-        {
-            var numPages = pdfDoc.PageCount;
-
-            pdfDoc.CopyPages(
-                string.Join(
-                    ",",
-                    indices
-                        .Select(it => it.ToString())
-                ),
-                numPages
-            );
-
-            for (int x = 0; x < numPages; x++)
-            {
-                pdfDoc.DeletePage(0);
-            }
-
-            var array = new ThumbSet[indices.Length];
-
-            for (int x = 0; x < indices.Length; x++)
-            {
-                array[x] = tv.Picts[indices[x] - 1];
-            }
-
-            {
-                int x;
-                for (x = 0; x < array.Length; x++)
-                {
-                    if (x < tv.Picts.Count)
-                    {
-                        tv.Picts[x] = array[x];
-                    }
-                    else
-                    {
-                        tv.Picts.Add(array[x]);
-                    }
-                }
-                for (; x < tv.Picts.Count; x++)
-                {
-                    tv.Picts.RemoveAt(tv.Picts.Count - 1);
-                }
-            }
-
-            Modified = true;
-        }
-
-        private void EditCopyPages(int destIdx, int firstIdx, int lastIdx)
-        {
-            var pageNums = new List<int>();
-            for (int x = 0; x <= tv.Picts.Count; x++)
-            {
-                if (destIdx == x)
-                {
-                    for (int y = firstIdx; y <= lastIdx; y++)
-                    {
-                        pageNums.Add(1 + y);
-                    }
-                }
-                if (x < tv.Picts.Count)
-                {
-                    pageNums.Add(1 + x);
-                }
-            }
-
-            EditSetPages(pageNums.ToArray());
-        }
+        private void EditCopyPages(int destIdx, int firstIdx, int lastIdx) => pdfEdit.CopyPages(destIdx, firstIdx, lastIdx);
 
         private void tv_DragLeave(object sender, EventArgs e)
         {
@@ -772,27 +575,12 @@ namespace yPDFEditor
 
             var rotateLeft = Object.ReferenceEquals(sender, bRotLeft);
 
-            {
-                for (int x = 0; x < tv.Picts.Count; x++)
-                {
-                    if (tv.SelectionFirst <= x && x <= tv.SelectionLast)
-                    {
-                        pdfDoc.RotatePage(
-                            x,
-                            (PdfRotation)(((int)pdfDoc.GetPageRotation(x) + (rotateLeft ? -1 : 1)) & 3)
-                        );
-
-                        tv.Picts[x] = ThumbSet.Delayed;
-
-                        Modified = true;
-                    }
-                }
-            }
+            pdfEdit.RotatePages(tv.SelectionFirst, tv.SelectionLast, rotateLeft);
         }
 
         private void bSave_Click(object sender, EventArgs e)
         {
-            SaveFile(Currentfp);
+            SaveFile(pdfEdit.Currentfp);
         }
 
         private void SaveFile(String saveTo)
@@ -804,7 +592,7 @@ namespace yPDFEditor
             }
             if (saveTo == null)
             {
-                sfdPict.FileName = Currentfp;
+                sfdPict.FileName = pdfEdit.Currentfp;
                 if (sfdPict.ShowDialog(this) != DialogResult.OK)
                 {
                     return;
@@ -812,28 +600,7 @@ namespace yPDFEditor
                 saveTo = sfdPict.FileName;
             }
 
-            var fpbak = Path.ChangeExtension(saveTo, ".bak");
-            if (File.Exists(fpbak))
-            {
-                File.Delete(fpbak);
-            }
-            if (File.Exists(saveTo))
-            {
-                File.Copy(saveTo, fpbak);
-            }
-
-            using (var pdfOut = PdfDocument.Compose(pdfDoc, null))
-            {
-                pdfOut.Save(saveTo);
-            }
-
-            Currentfp = saveTo;
-            Modified = false;
-
-            if (File.Exists(fpbak))
-            {
-                File.Delete(fpbak);
-            }
+            pdfEdit.SaveTo(saveTo);
         }
 
         private void ss_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -875,8 +642,7 @@ namespace yPDFEditor
                     }
                 }
 
-                var pdfOut = PdfDocument.Compose(pdfDoc, string.Join(",", pageNums));
-                pdfOut.Save(tempPdf);
+                pdfEdit.Export(tempPdf, string.Join(",", pageNums));
             }
 
             Process.Start(Path.Combine(Application.StartupPath, "MAPISendMailSa.exe"), " \"" + tempPdf + "\"");
@@ -913,7 +679,7 @@ namespace yPDFEditor
                 {
                     if (File.Exists(file))
                     {
-                        if (Currentfp == null)
+                        if (pdfEdit.Currentfp == null)
                         {
                             res = DialogResult.OK;
                         }
@@ -959,21 +725,7 @@ namespace yPDFEditor
                             {
                                 if (File.Exists(file))
                                 {
-                                    using (var pdfIn = PdfDocument.Load(file))
-                                    {
-                                        var numInPages = pdfIn.PageCount;
-
-                                        MakesureDoc();
-
-                                        var numPages = pdfDoc.PageCount;
-
-                                        pdfDoc.ImportPages(pdfIn, null, pdfDoc.PageCount);
-
-                                        for (int i = 0; i < numInPages; i++)
-                                        {
-                                            tv.Picts.Add(ThumbSet.Delayed);
-                                        }
-                                    }
+                                    pdfEdit.AppendPages(file);
                                 }
                             }
                         }
@@ -995,7 +747,7 @@ namespace yPDFEditor
                         }
                         else
                         {
-                            Process.Start(Path.Combine(Application.StartupPath, "MAPISendMailSa.exe"), " \"" + Currentfp + "\"");
+                            Process.Start(Path.Combine(Application.StartupPath, "MAPISendMailSa.exe"), " \"" + pdfEdit.Currentfp + "\"");
                         }
                         break;
                     }
@@ -1036,31 +788,8 @@ namespace yPDFEditor
             {
                 if (File.Exists(file))
                 {
-                    using (var pdfIn = PdfDocument.Load(file))
-                    {
-                        var numInPages = pdfIn.PageCount;
-
-                        MakesureDoc();
-                        var numPages = pdfDoc.PageCount;
-
-                        pdfDoc.ImportPages(pdfIn, null, numPages);
-
-                        for (int i = 0; i < numInPages; i++)
-                        {
-                            tv.Picts.Add(ThumbSet.Delayed);
-                        }
-
-                        Modified = true;
-                    }
+                    pdfEdit.AppendPages(file);
                 }
-            }
-        }
-
-        private void MakesureDoc()
-        {
-            if (pdfDoc == null)
-            {
-                pdfDoc = PdfDocument.CreateEmpty();
             }
         }
 
@@ -1073,7 +802,7 @@ namespace yPDFEditor
                 switch (form.ShowDialog())
                 {
                     case DialogResult.OK:
-                        EditSetPages(form.Indices);
+                        pdfEdit.EditSetPages(form.Indices);
                         break;
                 }
             }
