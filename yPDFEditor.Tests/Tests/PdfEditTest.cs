@@ -5,10 +5,10 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Unittest.Utils;
+using yPDFEditor.Tests.Utils;
 using yPDFEditor.Utils;
 
-namespace Unittest.Tests
+namespace yPDFEditor.Tests.Tests
 {
     public class PdfEditTest
     {
@@ -88,6 +88,17 @@ namespace Unittest.Tests
 
             var newPdf = TempUtil.Get(name + $".DeletePage.pdf");
             pdfEdit.DeletePages(0, 0);
+            pdfEdit.SaveTo(newPdf);
+        }
+
+        [Test]
+        [TestCase("title.pdf", "ZuABC.pdf")]
+        public void AppendPage(string pdf1, string pdf2)
+        {
+            var newPdf = TempUtil.Get(pdf1 + $".AppendPage.pdf");
+            File.Copy(Path.Combine(FilesDir, pdf1), newPdf, true);
+            pdfEdit.OpenFile(newPdf);
+            pdfEdit.AppendPages(Path.Combine(FilesDir, pdf2));
             pdfEdit.SaveTo(newPdf);
         }
 

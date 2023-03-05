@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Unittest.Utils
+namespace yPDFEditor.Tests.Utils
 {
     internal static class TempUtil
     {

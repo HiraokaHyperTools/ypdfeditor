@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using yPDFEditor.Utils;
 
-namespace Unittest.Tests
+namespace yPDFEditor.Tests.Tests
 {
     public class SomeTests
     {

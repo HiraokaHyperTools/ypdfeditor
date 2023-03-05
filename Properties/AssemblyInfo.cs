@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyInformationalVersion("0.15")] // here
+[assembly: InternalsVisibleTo("yPDFEditor.Tests")]
 
 // アセンブリに関する一般情報は以下の属性セットをとおして制御されます。 
 // アセンブリに関連付けられている情報を変更するには、
@@ -32,5 +33,3 @@ using System.Runtime.InteropServices;
 //      Revision
 //
 [assembly: AssemblyVersion("1.0.0.0")]
-
-[assembly: InternalsVisibleTo("Unittest")]

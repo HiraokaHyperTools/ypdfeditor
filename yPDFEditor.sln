@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unittest", "Unittest\Unittest.csproj", "{0D2ABA21-8E84-4C8F-ADE6-BB5CB39B038A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "yPDFEditor.Tests", "yPDFEditor.Tests\yPDFEditor.Tests.csproj", "{0D2ABA21-8E84-4C8F-ADE6-BB5CB39B038A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

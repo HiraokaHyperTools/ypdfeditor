@@ -9,8 +9,8 @@
     <ProjectGuid>{0D2ABA21-8E84-4C8F-ADE6-BB5CB39B038A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Unittest</RootNamespace>
-    <AssemblyName>Unittest</AssemblyName>
+    <RootNamespace>yPDFEditor.Tests</RootNamespace>
+    <AssemblyName>yPDFEditor.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
