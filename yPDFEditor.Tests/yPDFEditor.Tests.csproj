@@ -81,21 +81,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="files\NoInfo.pdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="files\title.pdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="files\ZuABC.pdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="files\1.pdf" />
+    <None Include="files\2.pdf" />
+    <None Include="files\3.pdf" />
+    <None Include="files\NoInfo.pdf" />
+    <None Include="files\title.pdf" />
+    <None Include="files\ZuABC.pdf" />
+    <None Include="files\ZuABC.tif" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="files\ZuABC.tif">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
