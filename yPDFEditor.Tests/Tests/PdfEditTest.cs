@@ -94,6 +94,7 @@ namespace yPDFEditor.Tests.Tests
         [Test]
         [TestCase("title.pdf", "ZuABC.pdf")]
         [TestCase("ZuABC.pdf", "title.pdf")]
+        [TestCase("NoInfo.pdf", "title.pdf")]
         public void AppendPage(string pdf1, string pdf2)
         {
             var newPdf = TempUtil.Get(pdf1 + $".AppendPage.pdf");
