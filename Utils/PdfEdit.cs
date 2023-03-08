@@ -150,7 +150,7 @@ namespace yPDFEditor.Utils
             {
                 var numInPages = pdfIn.PageCount;
                 MakesureDoc();
-                pdfDoc.ImportPages(pdfIn, null, numInPages);
+                pdfDoc.ImportPages(pdfIn, null, destIdx);
 
                 Modified = true;
 
@@ -307,7 +307,7 @@ namespace yPDFEditor.Utils
 
                 var numPages = pdfDoc.PageCount;
 
-                pdfDoc.ImportPages(pdfIn, null, pdfDoc.PageCount);
+                pdfDoc.ImportPages(pdfIn, null, numPages);
 
                 for (int i = 0; i < numInPages; i++)
                 {
