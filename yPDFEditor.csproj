@@ -1,6 +1,5 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="Current">
-  <Import Project="packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props" Condition="Exists('packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props')" />
-  <Import Project="packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props" Condition="Exists('packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props')" />
+  <Import Project="packages\HiraokaHyperTools.PdfiumViewer.Native.Windows.0.1.5637\build\HiraokaHyperTools.PdfiumViewer.Native.Windows.props" Condition="Exists('packages\HiraokaHyperTools.PdfiumViewer.Native.Windows.0.1.5637\build\HiraokaHyperTools.PdfiumViewer.Native.Windows.props')" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -58,7 +57,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PdfiumViewer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=e155b43a12d1aa93, processorArchitecture=MSIL">
-      <HintPath>packages\HiraokaHyperTools.PdfiumViewer.0.13.6\lib\net20\PdfiumViewer.dll</HintPath>
+      <HintPath>packages\HiraokaHyperTools.PdfiumViewer.0.13.7\lib\net20\PdfiumViewer.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -215,8 +214,7 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\PdfiumViewer.Native.x86_64.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86_64.no_v8-no_xfa.props'))" />
-    <Error Condition="!Exists('packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\PdfiumViewer.Native.x86.no_v8-no_xfa.2018.4.8.256\build\PdfiumViewer.Native.x86.no_v8-no_xfa.props'))" />
+    <Error Condition="!Exists('packages\HiraokaHyperTools.PdfiumViewer.Native.Windows.0.1.5637\build\HiraokaHyperTools.PdfiumViewer.Native.Windows.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\HiraokaHyperTools.PdfiumViewer.Native.Windows.0.1.5637\build\HiraokaHyperTools.PdfiumViewer.Native.Windows.props'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
