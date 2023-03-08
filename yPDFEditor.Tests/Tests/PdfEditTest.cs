@@ -12,8 +12,6 @@ namespace yPDFEditor.Tests.Tests
 {
     public class PdfEditTest
     {
-        private string FilesDir => Path.Combine(TestContext.CurrentContext.TestDirectory, "files");
-
         private readonly ObservableCollection<ThumbSet> picts;
         private readonly PdfEdit pdfEdit;
 
@@ -33,7 +31,7 @@ namespace yPDFEditor.Tests.Tests
         [TestCase("ZuABC.pdf", 3)]
         public void Load(string name, int numPages)
         {
-            pdfEdit.OpenFile(Path.Combine(FilesDir, name));
+            pdfEdit.OpenFile(ResolveFiles(name));
             Assert.That(pdfEdit.PageCount, Is.EqualTo(numPages));
             Assert.That(pdfEdit.Picts.Count, Is.EqualTo(numPages));
         }
@@ -43,7 +41,7 @@ namespace yPDFEditor.Tests.Tests
         [TestCase("ZuABC.pdf", 3)]
         public void LoadAgain(string name, int numPages)
         {
-            pdfEdit.OpenFile(Path.Combine(FilesDir, name));
+            pdfEdit.OpenFile(ResolveFiles(name));
             Assert.That(pdfEdit.PageCount, Is.EqualTo(numPages));
             Assert.That(pdfEdit.Picts.Count, Is.EqualTo(numPages));
             var newPdf = TempUtil.Get(name + ".Save.pdf");
@@ -61,7 +59,7 @@ namespace yPDFEditor.Tests.Tests
         [TestCase("ZuABC.pdf")]
         public void RotateLeft(string name)
         {
-            pdfEdit.OpenFile(Path.Combine(FilesDir, name));
+            pdfEdit.OpenFile(ResolveFiles(name));
 
             var newPdf = TempUtil.Get(name + $".RotateLeft.pdf");
             pdfEdit.RotatePages(0, pdfEdit.PageCount - 1, true);
@@ -73,7 +71,7 @@ namespace yPDFEditor.Tests.Tests
         [TestCase("ZuABC.pdf")]
         public void RotateRight(string name)
         {
-            pdfEdit.OpenFile(Path.Combine(FilesDir, name));
+            pdfEdit.OpenFile(ResolveFiles(name));
 
             var newPdf = TempUtil.Get(name + $".RotateRight.pdf");
             pdfEdit.RotatePages(0, pdfEdit.PageCount - 1, false);
@@ -84,7 +82,7 @@ namespace yPDFEditor.Tests.Tests
         [TestCase("ZuABC.pdf")]
         public void DeletePage(string name)
         {
-            pdfEdit.OpenFile(Path.Combine(FilesDir, name));
+            pdfEdit.OpenFile(ResolveFiles(name));
 
             var newPdf = TempUtil.Get(name + $".DeletePage.pdf");
             pdfEdit.DeletePages(0, 0);
@@ -98,9 +96,9 @@ namespace yPDFEditor.Tests.Tests
         public void AppendPage(string pdf1, string pdf2)
         {
             var newPdf = TempUtil.Get(pdf1 + $".AppendPage.pdf");
-            File.Copy(Path.Combine(FilesDir, pdf1), newPdf, true);
+            File.Copy(ResolveFiles(pdf1), newPdf, true);
             pdfEdit.OpenFile(newPdf);
-            pdfEdit.AppendPages(Path.Combine(FilesDir, pdf2));
+            pdfEdit.AppendPages(ResolveFiles(pdf2));
             pdfEdit.SaveTo(newPdf);
         }
 
@@ -124,12 +122,20 @@ namespace yPDFEditor.Tests.Tests
         [TestCase("N", FileAttributes.Normal, "ZuABC.pdf")]
         public void SaveToAttr(string mark, FileAttributes atts, string name)
         {
-            pdfEdit.OpenFile(Path.Combine(FilesDir, name));
+            pdfEdit.OpenFile(ResolveFiles(name));
 
             var newPdf = TempUtil.Get(name + $".{mark}.pdf");
             PrepNewFile(newPdf);
             File.SetAttributes(newPdf, atts);
             pdfEdit.SaveTo(newPdf);
         }
+
+        private string ResolveFiles(string path) => Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "..",
+            "..",
+            "files",
+            path
+        );
     }
 }
