@@ -82,6 +82,13 @@ namespace yPDFEditor.Utils
             Modified = false;
         }
 
+        /// <summary>
+        /// サムネイル画像を作成
+        /// </summary>
+        /// <param name="pageIndex">0 ~ N-1</param>
+        /// <param name="maxWidth"></param>
+        /// <param name="maxHeight"></param>
+        /// <returns></returns>
         public Bitmap GetThumbnailOf(int pageIndex, int maxWidth, int maxHeight)
         {
             var pageSize = pdfDoc.PageSizes[pageIndex];
@@ -97,6 +104,11 @@ namespace yPDFEditor.Utils
             return bitmap;
         }
 
+        /// <summary>
+        /// ページを削除
+        /// </summary>
+        /// <param name="firstIdx">0 to N-1</param>
+        /// <param name="lastIdx">0 to N-1</param>
         public void DeletePages(int firstIdx, int lastIdx)
         {
             for (int x = firstIdx; x <= lastIdx; x++)
@@ -115,6 +127,11 @@ namespace yPDFEditor.Utils
             }
         }
 
+        /// <summary>
+        /// 単一ページの PDF を取得
+        /// </summary>
+        /// <param name="pageIdx">0 to N-1</param>
+        /// <returns></returns>
         public byte[] GetPDF(int pageIdx)
         {
             using (var os = new MemoryStream())
@@ -127,6 +144,11 @@ namespace yPDFEditor.Utils
             }
         }
 
+        /// <summary>
+        /// ページを挿入
+        /// </summary>
+        /// <param name="pdfFile">ソース</param>
+        /// <param name="destIdx">0 to N</param>
         public void InsertPages(Stream pdfFile, int destIdx)
         {
             using (var pdfIn = PdfDocument.Load(pdfFile))
@@ -144,6 +166,11 @@ namespace yPDFEditor.Utils
             }
         }
 
+        /// <summary>
+        /// PDF を挿入
+        /// </summary>
+        /// <param name="file">ソース</param>
+        /// <param name="destIdx">0 to N</param>
         public void InsertPDF(string file, int destIdx)
         {
             using (var pdfIn = PdfDocument.Load(file))
@@ -161,6 +188,12 @@ namespace yPDFEditor.Utils
             }
         }
 
+        /// <summary>
+        /// ページを移動
+        /// </summary>
+        /// <param name="destIdx">0 to N</param>
+        /// <param name="firstIdx">0 to N-1</param>
+        /// <param name="lastIdx">0 to N-1</param>
         public void MovePages(int destIdx, int firstIdx, int lastIdx)
         {
             var numPages = Picts.Count;
@@ -183,6 +216,10 @@ namespace yPDFEditor.Utils
             EditSetPages(pageNums.ToArray());
         }
 
+        /// <summary>
+        /// ページを再配列
+        /// </summary>
+        /// <param name="indices">0 to N-1 の配列</param>
         public void EditSetPages(int[] indices)
         {
             var numPages = pdfDoc.PageCount;
@@ -230,6 +267,12 @@ namespace yPDFEditor.Utils
             Modified = true;
         }
 
+        /// <summary>
+        /// ページを複写
+        /// </summary>
+        /// <param name="destIdx">0 to N</param>
+        /// <param name="firstIdx">0 to N-1</param>
+        /// <param name="lastIdx">0 to N-1</param>
         public void CopyPages(int destIdx, int firstIdx, int lastIdx)
         {
             var pageNums = new List<int>();
@@ -251,6 +294,12 @@ namespace yPDFEditor.Utils
             EditSetPages(pageNums.ToArray());
         }
 
+        /// <summary>
+        /// ページを回転
+        /// </summary>
+        /// <param name="firstIdx">0 to N-1</param>
+        /// <param name="lastIdx">0 to N-1</param>
+        /// <param name="rotateLeft"></param>
         public void RotatePages(int firstIdx, int lastIdx, bool rotateLeft)
         {
             for (int x = 0; x < Picts.Count; x++)
@@ -326,6 +375,11 @@ namespace yPDFEditor.Utils
             }
         }
 
+        /// <summary>
+        /// 範囲を指定して PDF へエクスポート
+        /// </summary>
+        /// <param name="saveTo">保存先ファイルパス</param>
+        /// <param name="pageRange">`1,2-3` and so on, or null for entire</param>
         public void Export(string saveTo, string pageRange)
         {
             using (var pdfOut = PdfDocument.Compose(pdfDoc, pageRange))
