@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyInformationalVersion("0.15")] // here
+[assembly: AssemblyInformationalVersion("0.17")] // here
 [assembly: InternalsVisibleTo("yPDFEditor.Tests")]
 
 // アセンブリに関する一般情報は以下の属性セットをとおして制御されます。 
@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HIRAOKA HYPERS TOOLS, Inc.")]
 [assembly: AssemblyProduct("your PDF Editor")]
-[assembly: AssemblyCopyright("Copyright (C) 2011, 2022")]
+[assembly: AssemblyCopyright("Copyright (C) 2011, 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

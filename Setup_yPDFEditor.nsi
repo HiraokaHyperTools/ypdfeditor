@@ -9,11 +9,12 @@ Unicode true
 
 !define APP   "yPDFEditor"
 !define TITLE "your PDF Editor"
+!define BINDIR "bin\Release"
 
-!system 'MySign "bin\Release\${APP}.exe"'
+!system 'MySign "${BINDIR}\${APP}.exe"'
 !finalize 'MySign "%1"'
 
-!system 'DefineAsmVer.exe "bin\Release\${APP}.exe" "!define VER ""[RAWFV]"" " > Appver.tmp'
+!system 'DefineAsmVer.exe "${BINDIR}\${APP}.exe" "!define VER ""[RAWFV]"" " > Appver.tmp'
 !include "Appver.tmp"
 
 !searchreplace APPVER "${VER}" "." "_"
@@ -106,7 +107,7 @@ Section "${APP}" ;No components page, name is not important
   SetOutPath $INSTDIR
 
   ; Put file there
-  File /r /x "*.vshost.*" "bin\Release\*.*"
+  File /r /x "*.vshost.*" "${BINDIR}\*.*"
   File ".\MAPISendMailSa.exe"
   File "1.ico"
 
