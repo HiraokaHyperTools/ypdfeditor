@@ -100,7 +100,7 @@ namespace yPDFEditor.Utils
             );
             var cx = rect.Width;
             var cy = rect.Height;
-            var bitmap = (Bitmap)pdfDoc.Render(pageIndex, cx, cy, 96, 96, false);
+            var bitmap = (Bitmap)pdfDoc.Render(pageIndex, cx, cy, 96, 96, PdfRenderFlags.Annotations);
             return bitmap;
         }
 
